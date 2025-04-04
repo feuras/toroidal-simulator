@@ -38,11 +38,6 @@ It leverages **Three.js** for 3D rendering and provides a user-friendly control 
 * **Camera Controls:** Mouse drag to rotate, mouse wheel to zoom, preset view buttons (Orthographic & Isometric).
 * **UI Conveniences:** Collapsible control sections, UI visibility toggle, hotkey support.
 
-## Live Demo
-
-Access the live application here: **[Link to Live Demo]**
-*(Replace with your actual link)*
-
 ## Usage / Controls
 
 1.  Open in your web browser.
@@ -97,11 +92,4 @@ If you find this application useful or interesting, please consider supporting i
 
 ## Development / Contributing
 
-*(Placeholder: Add information here if you want others to contribute. E.g., how to set up a local development environment, coding standards, pull request process.)*
-
-Currently, you can run the application locally by simply opening the `index.html` file in a web browser that supports WebGL and ES6 JavaScript.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details (or choose another license).
-*(You'll need to add a LICENSE.md file with the actual license text if you include this)*
+Currently, you can run the application locally by simply opening the `toroidal.html` file in a web browser that supports WebGL and ES6 JavaScript.
