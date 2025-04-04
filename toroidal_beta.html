@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Toroidal Moment Simulator</title>
+		<link rel="canonical" href="https://toroidal.midland.org.uk/">
+    <title>EVO Toroidal Flow - Unified Physics (v18.2 - GetNumProps Fix)</title> <style>
+        /* CSS (Optimized & Updated - v18.2 GetNumProps Fix) */
+        :root {
+            --control-bg: rgba(0, 0, 0, 0.75); --input-bg: #333; --border-color: rgba(100, 100, 100, 0.5);
+            --text-color: white; --label-color: #ccc; --header-color: #aaa;
+            --button-bg: #4a5568; --button-hover-bg: #262f3e;
+            --view-button-bg: #2d5e70; --view-button-hover-bg: #1a3640;
+            --preset-restart-bg: #444; --preset-restart-hover-bg: #333;
+            --preset-reset-bg: #001845; --preset-reset-hover-bg: #000c21;
+            --config-save-bg: #1a5f7a; --config-save-hover-bg: #113e50;
+            --config-load-bg: #1f7a8c; --config-load-hover-bg: #155561;
+            --config-delete-bg: #8c1f1f; --config-delete-hover-bg: #5e1414;
+            --scrollbar-track: #1a1a1a; --scrollbar-thumb: #444; --scrollbar-thumb-hover: #555;
+            --icon-color: #aaa; --icon-active-color: #2a9fd6;
+            --overlay-bg: rgba(10, 10, 10, 0.9);
+        }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: Arial, sans-serif; color: var(--text-color); }
+        canvas { display: block; }
+        #controls {
+            position: absolute; bottom: 10px; left: 10px; background: var(--control-bg); padding: 5px 8px;
+            border-radius: 5px; z-index: 100; max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            font-size: 70%; max-width: 386px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        }
+
+        #controls::-webkit-scrollbar { width: 8px; }
+        #controls::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 4px;}
+        #controls::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; border: 2px solid var(--scrollbar-track); }
+        #controls::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
+
+        #reinitiateButtonContainer { padding: 5px 0 8px 0; margin: 0 5px 8px 5px; border-bottom: 1px solid var(--border-color); text-align: center; }
+        #reinitiateButton { background-color: var(--preset-restart-bg); border: none; color: var(--text-color); padding: 5px 15px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; font-size: 95%; width: 95%; display: block; margin: 0 auto; }
+        #reinitiateButton:hover { background-color: var(--preset-restart-hover-bg); }
+
+
+        .control-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); }
+        .control-section:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+        .control-section summary { font-size: 100%; color: var(--header-color); font-weight: bold; cursor: pointer; padding: 3px 0; list-style: none; }
+        .control-section summary::-webkit-details-marker { display: none; }
+        .control-section summary::before { content: '▶ '; font-size: 80%; }
+        .control-section[open] summary::before { content: '▼ '; }
+        .control-section[open] > *:not(summary) { margin-left: 10px; padding-left: 5px; border-left: 1px dotted #666; }
+        .sub-section { margin: 8px 0; padding-top: 8px; border-top: 1px dashed rgba(100, 100, 100, 0.3);}
+        .sub-section:first-of-type { border-top: none; padding-top: 0; margin-top: 5px;}
+        .sub-section h5 { margin: 3px 0 6px 0; font-size: 95%; color: #999; font-weight: normal; border-bottom: 1px dotted rgba(100,100,100,0.2); padding-bottom: 3px; }
+
+        .slider-container { margin: 5px 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+        .slider-container label, .color-picker-container label { flex-basis: 50%; margin-right: 4px; white-space: nowrap; font-size: 95%; overflow: hidden; text-overflow: ellipsis; color: var(--label-color); cursor: help; }
+        .slider-container input[type="range"] { flex-grow: 1; margin: 0; padding: 0; height: 18px; }
+        .slider-container input[type="number"], .slider-number-input { flex: 0 0 45px; background-color: var(--input-bg); color: var(--text-color); border: 1px solid #555; border-radius: 3px; font-size: 90%; padding: 1px 3px; text-align: right; height: 18px; box-sizing: border-box; -moz-appearance: textfield; }
+        .slider-container input[type="number"]::-webkit-outer-spin-button, .slider-container input[type="number"]::-webkit-inner-spin-button,
+        .slider-number-input::-webkit-outer-spin-button, .slider-number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .slider-container > span, .animation-controls > span { flex: 0 0 1em; font-size: 90%; color: var(--label-color); padding-left: 2px; text-align: left; white-space: nowrap; flex-shrink: 0; }
+
+        .select-container, .checkbox-container, .input-container, .color-picker-container { margin: 5px 0; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+        .select-container label, .checkbox-container label, .input-container label { flex: 0 0 40%; margin-right: 5px; white-space: nowrap; font-size: 95%; overflow: hidden; text-overflow: ellipsis; color: var(--label-color); cursor: help; }
+        .input-container input[type="number"]:not(.slider-number-input), .input-container input[type="text"] { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid #555; border-radius: 3px; font-size: 90%; padding: 1px 3px; width: 50px; text-align: right;}
+        .input-container input[type="text"] { text-align: left; width: auto; }
+        .select-container select { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid #555; border-radius: 3px; font-size: 90%; padding: 2px; }
+        .checkbox-container { justify-content: flex-start; }
+        .checkbox-container input[type="checkbox"] { margin-right: 8px; flex-shrink: 0;}
+        .checkbox-container label { flex: 1; white-space: normal; font-weight: normal; }
+        .color-picker-container { justify-content: flex-start; gap: 10px; }
+        .color-picker-container input[type="color"] { flex: 0 0 50px; height: 20px; border: 1px solid #555; border-radius: 3px; background-color: var(--input-bg); cursor: pointer; padding: 1px; box-sizing: border-box; }
+        .color-picker-container input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker-container input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+        .color-picker-container input[type="color"]::-moz-color-swatch { border: none; border-radius: 2px; }
+
+        input:disabled, select:disabled, button:disabled { opacity: 0.5; cursor: not-allowed; }
+        label.disabled { opacity: 0.5; cursor: not-allowed !important; }
+        .checkbox-container input:disabled + label { opacity: 0.5; cursor: not-allowed !important; }
+        .slider-container.disabled, .color-picker-container.disabled,
+        .checkbox-container.disabled, .input-container.disabled { opacity: 0.5; }
+        .slider-container.disabled *, .color-picker-container.disabled *,
+        .checkbox-container.disabled *, .input-container.disabled * { cursor: not-allowed !important; }
+
+        .button-container { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); text-align: center; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 5px; }
+        .button-container > button, .button-container > select, .support-button, .manual-button { background-color: var(--button-bg); border: none; color: var(--text-color); padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; font-size: 85%; flex: 1 1 auto; min-width: 60px; margin-bottom: 3px; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box; }
+        .button-container > button:hover:not(:disabled), .support-button:hover, .manual-button:hover { background-color: var(--button-hover-bg); }
+        .button-container > select { padding: 4px 2px; flex-grow: 0; }
+        .button-container > select:hover { background-color: var(--input-bg); }
+
+        #showUIButton { position: absolute; bottom: 10px; left: 10px; background-color: rgba(0, 0, 0, 0.5); border: none; color: var(--text-color); padding: 4px 10px; border-radius: 4px; cursor: pointer; z-index: 90; transition: opacity 0.5s ease, transform 0.5s ease; opacity: 0; pointer-events: none; font-size: 85%; }
+        #showUIButton.visible { opacity: 1; pointer-events: auto; transform: translateX(0); }
+        #showUIButton.faded-out { opacity: 0.1 !important; }
+
+        #manual-color-controls, #eigenmode-controls { display: none; }
+        #manual-color-controls.visible, #eigenmode-controls.visible { display: flex; flex-direction: column; }
+        .hidden { display: none !important; }
+
+        /* Per Shell Styling */
+        #shell-controls-container { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+        .shell-control-group { border: 1px solid rgba(100, 100, 100, 0.4); border-radius: 4px; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; background-color: rgba(20,20,20,0.3); }
+        .shell-control-group h6 { margin: 0 0 5px 0; font-size: 105%; color: #b0c4de; border-bottom: 1px dotted rgba(100,100,100,0.3); padding-bottom: 3px; font-weight: bold; }
+        .shell-control-group .slider-container label, .shell-control-group .color-picker-container label, .shell-control-group .checkbox-container label { flex-basis: 45%; font-size: 90%; color: #bbb; }
+        .shell-control-group .checkbox-container { margin-left: 0; }
+        .shell-discrete-controls { display: none; flex-direction: column; gap: 4px; padding-left: 5px; margin-top: 4px; }
+        .shell-discrete-controls.visible { display: flex; }
+        .shell-nm-link-wrapper { display: flex; align-items: center; justify-content: flex-start; margin: 2px 0 4px 25%; gap: 5px; font-size: 90%; color: var(--label-color); }
+        .shell-slider-link-icon { cursor: pointer; font-size: 120%; color: var(--icon-color); transition: color 0.2s; user-select: none; }
+        .shell-slider-link-icon:hover { color: white; }
+        .shell-slider-link-icon.active { color: var(--icon-active-color); }
+        #discreteTotalPoints { font-weight: bold; color: #eee; }
+        .discrete-points-display p { margin: 5px 0 0 0; }
+
+        .view-buttons-container { display: flex; flex-wrap: wrap; justify-content: space-around; flex-basis: 100%; margin-top: 5px; gap: 5px; }
+        .view-buttons-container button { flex: 1 1 auto; background-color: var(--view-button-bg); min-width: 45px; padding: 4px 6px; font-size: 80%; }
+        .view-buttons-container button:hover:not(:disabled) { background-color: var(--view-button-hover-bg); }
+        .animation-controls { display: flex; justify-content: space-around; flex-basis: 100%; margin-top: 5px; gap: 5px; align-items: center; }
+        .animation-controls button { min-width: 50px; flex-shrink: 0; }
+        .animation-controls label { font-size: 90%; white-space: nowrap; color: var(--label-color); flex-shrink: 0; }
+        .animation-controls input[type="range"] { flex-grow: 1; margin: 0 5px; min-width: 50px; }
+
+        .preset-controls { display: flex; justify-content: space-around; flex-basis: 100%; margin-top: 5px; gap: 5px; }
+        .preset-controls button { flex: 1; color: white; border-radius: 10px; }
+        #resetPresetButton { background-color: var(--preset-reset-bg); }
+        #resetPresetButton:hover:not(:disabled) { background-color: var(--preset-reset-hover-bg); }
+
+        .config-slot-controls { display: flex; flex-direction: column; gap: 5px; }
+        .config-slot-row { display: flex; gap: 5px; align-items: center; }
+        .config-slot-row input[type="text"] { flex-grow: 1; min-width: 100px;}
+        .config-slot-row select { flex-grow: 1; }
+        .config-slot-row button { flex-shrink: 0; padding: 3px 6px; font-size: 80%; min-width: 50px;}
+        #saveConfigButton { background-color: var(--config-save-bg); }
+        #saveConfigButton:hover:not(:disabled) { background-color: var(--config-save-hover-bg); }
+        #loadConfigButton { background-color: var(--config-load-bg); }
+        #loadConfigButton:hover:not(:disabled) { background-color: var(--config-load-hover-bg); }
+        #deleteConfigButton { background-color: var(--config-delete-bg); }
+        #deleteConfigButton:hover:not(:disabled) { background-color: var(--config-delete-hover-bg); }
+
+        #hotkeysPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--overlay-bg); color: var(--text-color); padding: 20px 30px; border: 1px solid var(--border-color); border-radius: 10px; z-index: 1001; max-width: 400px; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #hotkeysPanel h4 { margin-top: 0; color: var(--header-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        #hotkeysPanel dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 15px; font-size: 95%; }
+        #hotkeysPanel dt { font-weight: bold; color: var(--label-color); }
+        #hotkeysPanel dd { margin: 0; }
+        #closeHotkeysButton { position: absolute; top: 5px; right: 10px; background: none; border: none; color: var(--label-color); font-size: 150%; font-weight: bold; cursor: pointer; padding: 0 5px; }
+        #closeHotkeysButton:hover { color: white; }
+
+        #statsContainer { position: absolute; top: 10px; right: 10px; z-index: 101; cursor: pointer; opacity: 0.8; }
+        #statsContainer > div { background: rgba(0,0,0,0.5) !important; } /* Override stats.js default bg */
+
+    </style>
+</head>
+<body>
+    <div id="statsContainer" style="display: none;"></div>
+
+    <div id="controls">
+        <div id="reinitiateButtonContainer">
+             <button id="reinitiateButton" title="Reinitialize particles with current settings (Shift+R)">Reinitiate</button> </div>
+
+        <details class="control-section" open>
+            <summary>Flow Dynamics</summary>
+              <div class="slider-container">
+                  <label for="flowIntensity" title="Overall speed/energy of the flow">Intensity:</label>
+                  <input type="range" id="flowIntensity" min="0" max="1" step="0.01" value="0.5">
+                  <input type="number" class="slider-number-input" id="flowIntensityNumber" min="0" max="1" step="0.01" value="0.5">
+                  <span></span>
+              </div>
+              <div class="slider-container">
+                  <label for="flowTwist" title="Ratio of Toroidal/Poloidal speed (>1 means more Toroidal)">Twist:</label>
+                  <input type="range" id="flowTwist" min="0.1" max="10" step="0.1" value="2.0">
+                  <input type="number" class="slider-number-input" id="flowTwistNumber" min="0.1" max="10" step="0.1" value="2.0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="flowCouplingFactor" title="Couples inward and rotational speeds (e.g., >0 makes faster rotation increase inward speed)">Flow Coupling:</label>
+                  <input type="range" id="flowCouplingFactor" min="-0.5" max="0.5" step="0.01" value="0.0">
+                  <input type="number" class="slider-number-input" id="flowCouplingFactorNumber" min="-0.5" max="0.5" step="0.01" value="0.0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="angularMomentumEffect" title="Original: Increases speed closer to center. Disabled if 'Approx Ang Mom' is checked.">Ang. Momentum:</label>
+                  <input type="range" id="angularMomentumEffect" min="0" max="5" step="0.05" value="5.0">
+                  <input type="number" class="slider-number-input" id="angularMomentumEffectNumber" min="0" max="5" step="0.05" value="5.0">
+                   <span></span>
+             </div>
+              <div class="checkbox-container"> <input type="checkbox" id="approximateAngularMomentum" checked> <label for="approximateAngularMomentum" title="Approximate v ~ 1/r for toroidal speed (overrides Ang. Momentum Effect)">Approx. Ang. Mom.</label> </div>
+              <div class="slider-container">
+                  <label for="windingTheta" title="Constant poloidal drift (radians/sec)">Winding θ:</label>
+                  <input type="range" id="windingTheta" min="-5" max="5" step="1" value="0">
+                  <input type="number" class="slider-number-input" id="windingThetaNumber" min="-5" max="5" step="1" value="0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="windingPhi" title="Constant toroidal drift (radians/sec)">Winding φ:</label>
+                  <input type="range" id="windingPhi" min="-5" max="5" step="1" value="0">
+                  <input type="number" class="slider-number-input" id="windingPhiNumber" min="-5" max="5" step="1" value="0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="solitonPhasing" title="Force pulling particles back towards ideal flow path (if random) or original grid point (if discrete)">Soliton Phasing:</label>
+                  <input type="range" id="solitonPhasing" min="0.0" max="0.1" step="0.0001" value="0">
+                  <input type="number" class="slider-number-input" id="solitonPhasingNumber" min="0.0" max="0.1" step="0.0001" value="0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="jitterScale" title="Random positional jitter added each frame (Affects physics)">Jitter Scale:</label>
+                  <input type="range" id="jitterScale" min="0" max="50" step="0.1" value="0.0">
+                  <input type="number" class="slider-number-input" id="jitterScaleNumber" min="0" max="50" step="0.1" value="0.0">
+                   <span></span>
+             </div>
+
+              <div class="sub-section">
+                  <h5>Eigenmode Visualization</h5>
+                  <div class="checkbox-container"> <input type="checkbox" id="visualizeEigenmode"> <label for="visualizeEigenmode" title="Modulate flow based on theoretical eigenmode (m, n)">Visualize Eigenmode (m, n)</label> </div>
+                  <div id="eigenmode-controls" class="eigenmode-controls">
+                      <div class="input-container"> <label for="eigenmodeM" title="Poloidal mode number">Mode m:</label> <input type="number" id="eigenmodeM" step="1" value="1"> </div>
+                      <div class="input-container"> <label for="eigenmodeN" title="Toroidal mode number">Mode n:</label> <input type="number" id="eigenmodeN" step="1" value="2"> </div>
+                      <div class="slider-container">
+                          <label for="eigenmodeFlowStrength" title="Strength of the eigenmode flow modulation (+ speeds up crests, - speeds up troughs)">Eigen Strength:</label>
+                          <input type="range" id="eigenmodeFlowStrength" min="-0.5" max="0.5" step="0.01" value="0">
+                          <input type="number" class="slider-number-input" id="eigenmodeFlowStrengthNumber" min="-0.5" max="0.5" step="0.01" value="0">
+                           <span></span>
+                      </div>
+                  </div>
+              </div>
+              </details>
+
+        <details class="control-section">
+            <summary>Geometry & Structure</summary>
+              <div class="select-container"> <label for="arrangementMode" title="Arrangement of toroids">Arrangement:</label>
+                  <select id="arrangementMode">
+                      <option value="single" selected>Single</option>
+                      <option value="vesicaPiscis">Vesica Piscis (2)</option>
+                      <option value="flowerOfLife2D">Flower of Life (2D - 19)</option>
+                      <option value="fruitOfLife">Fruit of Life (2D - 13)</option>
+                      <option value="tetrahedron">Platonic: Tetrahedron (4)</option>
+                      <option value="cube">Platonic: Cube (8)</option>
+                      <option value="octahedron">Platonic: Octahedron (6)</option>
+                      <option value="icosahedron">Platonic: Icosahedron (12)</option>
+                      <option value="dodecahedron">Platonic: Dodecahedron (20)</option>
+                    </select>
+                  </div>
+              <div class="checkbox-container">
+                  <input type="checkbox" id="showTorusGeometry">
+                  <label for="showTorusGeometry" title="Render the underlying torus shape as a wireframe">Show Torus Geometry</label>
+              </div>
+               <div class="slider-container">
+                   <label for="tubeRadius" title="Minor radius of the torus tube">Tube Radius (r):</label>
+                   <input type="range" id="tubeRadius" min="-10000" max="10000" step="10" value="2940">
+                   <input type="number" class="slider-number-input" id="tubeRadiusNumber" min="-10000" max="10000" step="10" value="2940">
+                    <span></span>
+              </div>
+               <div class="slider-container">
+                   <label for="torusRadius" title="Major radius of the torus / Base scale for arrangements">Torus Radius (R):</label>
+                   <input type="range" id="torusRadius" min="-10000" max="10000" step="10" value="3000">
+                   <input type="number" class="slider-number-input" id="torusRadiusNumber" min="-10000" max="10000" step="10" value="3000">
+                    <span></span>
+              </div>
+               <div class="slider-container">
+                   <label for="pulseAmplitude" title="Amplitude of torus radius oscillation">Pulse Amp:</label>
+                   <input type="range" id="pulseAmplitude" min="0" max="2000" step="10" value="0">
+                   <input type="number" class="slider-number-input" id="pulseAmplitudeNumber" min="0" max="2000" step="10" value="0">
+                    <span></span>
+              </div>
+               <div class="slider-container">
+                   <label for="pulseFrequency" title="Frequency of torus radius oscillation">Pulse Freq:</label>
+                   <input type="range" id="pulseFrequency" min="0" max="2" step="0.01" value="0.5">
+                   <input type="number" class="slider-number-input" id="pulseFrequencyNumber" min="0" max="2" step="0.01" value="0.5">
+                    <span></span>
+              </div>
+
+              <!-- == Nested Toroids / Shell Configuration Section == -->
+              <div class="sub-section">
+                  <h5>Shell Configuration</h5>
+                   <div class="slider-container">
+                      <label for="numInnerTori" title="Number of nested shells (0 = base shell only)">Nested Shells:</label>
+                      <input type="range" id="numInnerTori" min="0" max="6" step="1" value="0">
+                      <input type="number" class="slider-number-input" id="numInnerToriNumber" min="0" max="6" step="1" value="0">
+                       <span></span>
+                 </div>
+                  <div class="slider-container">
+                      <label for="innerTorusRatio" title="Size ratio between consecutive nested shells">Shell Ratio:</label>
+                      <input type="range" id="innerTorusRatio" min="0.1" max="0.95" step="0.01" value="0.5">
+                      <input type="number" class="slider-number-input" id="innerTorusRatioNumber" min="0.1" max="0.95" step="0.01" value="0.5">
+                       <span></span>
+                 </div>
+                 <!-- Container for dynamic shell controls -->
+                 <div id="shell-controls-container">
+                     <!-- Shell control groups will be added here by JS -->
+                 </div>
+                 <!-- Display total points -->
+                 <div class="discrete-points-display">
+                    <p>Total Particles: <span id="discreteTotalPoints">N/A</span></p>
+                 </div>
+              </div>
+              <!-- == End Shell Configuration Section == -->
+           </details>
+
+        <details class="control-section">
+            <summary>Particles & Appearance</summary>
+              <!-- Global Particle Count (Conditional) -->
+              <div class="slider-container">
+                  <label for="particleCount" id="particleCountLabel" title="Total particles for shells set to 'Random'">Particles (k):</label>
+                  <input type="range" id="particleCount" min="1000" max="500000" step="1000" value="90000">
+                  <input type="number" class="slider-number-input" id="particleCountNumber" min="1" max="500" step="1" value="90">
+                  <span>k</span>
+              </div>
+              <!-- Global Particle Size -->
+              <div class="slider-container">
+                  <label for="particleSize" title="Base size of ALL particles">Particle Size:</label>
+                  <input type="range" id="particleSize" min="0.1" max="20" step="0.1" value="1.0">
+                  <input type="number" class="slider-number-input" id="particleSizeNumber" min="0.1" max="20" step="0.1" value="1.0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="energyIntensity" title="Affects particle glow/brightness (visual only)">Energy Intensity:</label>
+                  <input type="range" id="energyIntensity" min="0" max="500" step="1" value="50">
+                  <input type="number" class="slider-number-input" id="energyIntensityNumber" min="0" max="500" step="1" value="50">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="particleOpacityVariation" title="Adds randomness BELOW base opacity (0=none, 1=can go to 0)">Opacity Var:</label>
+                  <input type="range" id="particleOpacityVariation" min="0.0" max="1.0" step="0.01" value="0.0">
+                  <input type="number" class="slider-number-input" id="particleOpacityVariationNumber" min="0.0" max="1.0" step="0.01" value="0.0">
+                   <span></span>
+             </div>
+              <div class="slider-container">
+                  <label for="opacityFromCamera" title="Fade opacity based on distance from camera (0=none, 1=max effect)">Opacity/Cam:</label>
+                  <input type="range" id="opacityFromCamera" min="0.0" max="1.0" step="0.01" value="0.0">
+                  <input type="number" class="slider-number-input" id="opacityFromCameraNumber" min="0.0" max="1.0" step="0.01" value="0.0">
+                   <span></span>
+             </div>
+
+              <!-- == Coloring Section == -->
+              <div class="sub-section">
+                  <h5>Coloring</h5>
+                  <div class="select-container">
+                      <label for="colorMode" title="Parameter used to determine particle color">Color Mode:</label>
+                      <select id="colorMode">
+                          <option value="manualShell" selected>Manual/Shell Color</option>
+                          <option value="velocity">Velocity</option>
+                          <option value="directionChange">Direction Change</option>
+                          <option value="poloidal">Poloidal Angle</option>
+                          <option value="toroidal">Toroidal Angle</option>
+                          <option value="radialTube">Radial Pos (Tube)</option>
+                          <option value="radialXY">Radial Pos (XY)</option>
+                          <option value="distFromR">Dist from R</option>
+                          <option value="anglesHL">Angles (H=Tor, L=Pol)</option>
+                          <option value="eigenmodePhase">Eigenmode Phase</option>
+                          <option value="xyz">XYZ Position</option>
+                      </select>
+                  </div>
+                  <!-- Container for Global Color Variation -->
+                  <div id="manual-color-controls"> <!-- Visibility toggled by JS based on colorMode -->
+                       <div class="slider-container">
+                          <label for="particleColorVariation" title="Random variation applied to manual/shell color">Color Variation:</label>
+                          <input type="range" id="particleColorVariation" min="0" max="1" step="0.01" value="0.0">
+                          <input type="number" class="slider-number-input" id="particleColorVariationNumber" min="0" max="1" step="0.01" value="0.0">
+                           <span></span>
+                     </div>
+                  </div>
+              </div>
+              <!-- == End Coloring Section == -->
+
+
+              <div class="sub-section">
+                  <h5>Post-Processing Effects</h5>
+                  <div class="checkbox-container"> <input type="checkbox" id="enableTrails" checked> <label for="enableTrails" title="Enable motion trail effect (Post-processing)">Enable Trails</label> </div>
+                  <div class="slider-container">
+                      <label for="trailDecay" title="How quickly trails fade (lower = longer trails)">Trail Decay:</label>
+                      <input type="range" id="trailDecay" min="0.0" max="0.998" step="0.001" value="0.938">
+                      <input type="number" class="slider-number-input" id="trailDecayNumber" min="0.0" max="0.998" step="0.001" value="0.938">
+                       <span></span>
+                 </div>
+                  <div class="checkbox-container"> <input type="checkbox" id="enableBloom" checked> <label for="enableBloom" title="Enable bloom glow effect (Post-processing)">Enable Bloom</label> </div>
+                  </div>
+           </details>
+
+        <details class="control-section">
+            <summary>Configuration Slots</summary>
+            <div class="config-slot-controls">
+                <div class="config-slot-row input-container">
+                    <label for="configNameInput">Save Name:</label>
+                    <input type="text" id="configNameInput" placeholder="Enter config name">
+                    <button id="saveConfigButton" title="Save current settings with the specified name">Save As</button>
+                </div>
+                <div class="config-slot-row select-container">
+                    <label for="configSelect">Load/Delete:</label>
+                    <select id="configSelect">
+                        <option value="">-- Select Saved Config --</option>
+                        </select>
+                    <button id="loadConfigButton" title="Load settings from the selected configuration">Load</button>
+                    <button id="deleteConfigButton" title="Delete the selected configuration">Delete</button>
+                </div>
+            </div>
+        </details>
+
+        <div class="button-container">
+            <button id="toggleUIButton" title="Show/Hide this control panel (H)">Hide UI</button>
+            <button id="showHotkeysButton" title="Display keyboard shortcuts">Hotkeys</button>
+            <button id="toggleStatsButton" title="Show/Hide Performance Stats">Stats</button>
+            <a href="https://toroidal.midland.org.uk/readme.txt" target="_blank" rel="noopener noreferrer" class="manual-button" title="Open User Manual">Manual</a>
+            <a href="https://buymeacoffee.com/6af1sbu" target="_blank" rel="noopener noreferrer" class="support-button" title="Support the Developer">Support</a>
+
+            <div class="animation-controls">
+                <button id="playPauseButton" title="Play/Pause Simulation (Space)">Pause</button>
+                <label for="simSpeed">Speed:</label>
+                <input type="range" id="simSpeed" min="0.1" max="5.0" step="0.1" value="1.0" title="Simulation Speed Multiplier">
+                <input type="number" class="slider-number-input" id="simSpeedNumber" min="0.1" max="5.0" step="0.1" value="1.0">
+                 <span>x</span>
+           </div>
+            <div class="preset-controls">
+                <button id="resetPresetButton" title="Reset all settings to default and clear ALL saved state (Shift+Del)">⚠️ Reset All</button>
+            </div>
+            <div class="view-buttons-container">
+                <button id="snapTopViewButton" title="View from Top (T)">Top</button>
+                <button id="snapBottomViewButton" title="View from Bottom">Bottom</button>
+                <button id="snapFrontViewButton" title="View from Front (F)">Front</button>
+                <button id="snapBackViewButton" title="View from Back">Back</button>
+                <button id="snapLeftViewButton" title="View from Left (L)">Left</button>
+                <button id="snapRightViewButton" title="View from Right">Right</button>
+                <button id="snapIsoNEButton" title="Isometric View (I)">Iso NE</button>
+                <button id="snapIsoNWButton" title="Isometric View">Iso NW</button>
+                <button id="snapIsoSEButton" title="Isometric View">Iso SE</button>
+                <button id="snapIsoSWButton" title="Isometric View">Iso SW</button>
+            </div>
+        </div>
+        </div>
+    <button id="showUIButton" title="Show UI Panel (H)">Show UI</button>
+
+    <div id="hotkeysPanel">
+        <button id="closeHotkeysButton" title="Close Hotkeys Panel">&times;</button>
+        <h4>Keyboard Shortcuts</h4>
+        <dl>
+            <dt>Space</dt><dd>Play / Pause Simulation</dd>
+            <dt>H</dt><dd>Show / Hide UI Panel</dd>
+            <dt>Shift + R</dt><dd>Reinitiate Simulation</dd>
+            <dt>Shift + Delete</dt><dd>Reset All Settings (Clears Saved States)</dd>
+            <dt>T</dt><dd>Snap View to Top</dd>
+            <dt>F</dt><dd>Snap View to Front</dd>
+            <dt>L</dt><dd>Snap View to Left</dd>
+            <dt>I</dt><dd>Snap View to Isometric NE</dd>
+            <dt>Escape</dt><dd>Close this Hotkeys Panel / Blur Input</dd>
+        </dl>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/AfterimagePass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/AfterimageShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script>
+        // --- Global Scope ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        const initialCameraPosition = { x: 0, y: 0, z: 10000 };
+        const initialCameraRotation = { x: 0, y: 0 };
+        camera.position.z = initialCameraPosition.z;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);
+        document.body.appendChild(renderer.domElement);
+        const clock = new THREE.Clock();
+        let frameCount = 0;
+        const ambientLight = new THREE.AmbientLight(0x333333); scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6); directionalLight.position.set(1, 1, 1); scene.add(directionalLight);
+
+        const stats = new Stats();
+        const statsContainer = document.getElementById('statsContainer');
+        if (statsContainer) statsContainer.appendChild(stats.dom);
+
+        const localStorageKeyPrefix = 'torusSimPreset_v18.2_GetNumPropsFix'; // Updated version marker
+        const autoSaveKey = `${localStorageKeyPrefix}_autosave`;
+        const namedSlotPrefix = `${localStorageKeyPrefix}_slot_`;
+
+        // --- Simulation State (v18.2 Defaults) ---
+        const defaultNestedShellColors = [ "#4B0082", "#0000FF", "#00FF00", "#FFFF00", "#FF7F00", "#FF0000" ];
+
+        const defaultShellSetting = {
+            useDiscretePlacement: true,
+            discreteN: 300,
+            discreteM: 300,
+            discreteSlidersLinked: true,
+            particleOpacity: 0.8,
+        };
+
+        let simState = {
+            flowIntensity: 0.5, flowTwist: 2.0, flowCouplingFactor: 0.0, angularMomentumEffect: 5.0, approximateAngularMomentum: true, windingTheta: 0, windingPhi: 0, solitonPhasing: 0.0, jitterScale: 0.0, visualizeEigenmode: false, eigenmodeM: 1, eigenmodeN: 2, eigenmodeFlowStrength: 0.0,
+            arrangementMode: 'single', tubeRadius: 2940, torusRadius: 3000, pulseAmplitude: 0.0, pulseFrequency: 0.5, numInnerTori: 0, innerTorusRatio: 0.5, showTorusGeometry: false,
+            shellSettings: [JSON.parse(JSON.stringify(defaultShellSetting))],
+            userParticleCount: 90000, particleCount: 0, particleSize: 1.0, energyIntensity: 50.0, particleOpacityVariation: 0.0, opacityFromCamera: 0.0, colorMode: 'manualShell', baseParticleColor: "#639EFF", nestedShellColors: [...defaultNestedShellColors], particleColorVariation: 0.0,
+            enableTrails: true, trailDecay: 0.938, enableBloom: true,
+            isPaused: false, simSpeed: 1.0, uiVisible: true, showStats: false,
+            cameraPosition: { ...initialCameraPosition }, cameraRotation: { ...initialCameraRotation }, targetCameraRotation: { ...initialCameraRotation }
+        };
+
+        // --- Three.js Setup & Helpers ---
+        const defaultParticleColor = new THREE.Color(0xcccccc);
+        const arrangementGroup = new THREE.Group(); scene.add(arrangementGroup);
+        const torusGeometryGroup = new THREE.Group(); scene.add(torusGeometryGroup);
+        const torusWireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x00cc44, wireframe: true, transparent: true, opacity: 0.3 });
+
+        const particlesMaterial = new THREE.PointsMaterial({ size: simState.particleSize, vertexColors: true, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false });
+        const maxParticleCount = 500000;
+        const tempColor = new THREE.Color(); const tempVec3 = new THREE.Vector3(); const tempVec3_2 = new THREE.Vector3(); const worldUp = new THREE.Vector3(0, 1, 0); const twoPi = Math.PI * 2; const epsilon = 0.00001;
+        const MAX_EXPECTED_SPEED = 1500; const MAX_FLOW_SPEED = 1.0;
+        const ARRANGEMENT_BASE_SCALE_FACTOR = 2.0; const ARRANGEMENT_3D_CONTRACTION = 0.7; const phiGolden = (1 + Math.sqrt(5)) / 2;
+        const MAX_POS_EXTENT = 10000;
+
+        // --- Post Processing Setup ---
+        const composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        const afterimagePass = new THREE.AfterimagePass(); afterimagePass.uniforms["damp"].value = simState.trailDecay;
+        const bloomPass = new THREE.UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 ); bloomPass.threshold = 0.2; bloomPass.strength = 0.6; bloomPass.radius = 0.55;
+
+        let isDragging = false; let previousMousePosition = { x: 0, y: 0 };
+        const cameraTransitionSpeed = 0.08;
+
+        // --- Velocity Tracking ---
+        let previousVelocities = null;
+        const prevVelVec = new THREE.Vector3(); const currVelVec = new THREE.Vector3(); const normPrev = new THREE.Vector3(); const normCurr = new THREE.Vector3();
+
+        // --- Helper Functions ---
+        function calculateEigenvalue(m, n, r, R) { if(Math.abs(r)<epsilon||Math.abs(R)<epsilon) return NaN; return -((m*m)/(r*r)+(n*n)/(R*R)); }
+        function randomOffset(scale) { return (Math.random() - 0.5) * 2 * scale; }
+        function lerp(start, end, t) { return start * (1 - t) + end * t; }
+        function angleLerp(a0, a1, t) { const max = Math.PI * 2; const da = (a1 - a0) % max; return a0 + (((2 * da) % max) - da) * t; }
+        function debounce(func, wait) { let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
+        // *** RESTORED HELPER FUNCTION ***
+        function getNumberInputProps(inputElement) { if (!inputElement) return {}; return { min: parseFloat(inputElement.min), max: parseFloat(inputElement.max), step: parseFloat(inputElement.step) }; }
+        // --- END Helper Functions ---
+
+
+        // --- Arrangement Offset Calculation ---
+        // ... (getArrangementOffsets remains the same)
+        function getArrangementOffsets(mode, baseRadius) {
+            const offsets = [];
+            const S_base = Math.max(100, Math.abs(baseRadius)) * ARRANGEMENT_BASE_SCALE_FACTOR;
+            const R_fol = S_base / ARRANGEMENT_BASE_SCALE_FACTOR;
+            const S_3d = S_base * ARRANGEMENT_3D_CONTRACTION;
+            const sqrt3 = Math.sqrt(3); const cos = Math.cos; const sin = Math.sin; const PI = Math.PI; const ang120 = 2 * PI / 3; const ang60 = PI / 3;
+            switch (mode) {
+                 case 'flowerOfLife2D': offsets.push({ x: 0, y: 0, z: 0 }); for (let i = 0; i < 6; i++) { offsets.push({ x: R_fol * cos(i * ang60), y: R_fol * sin(i * ang60), z: 0 }); } const Rsqrt3_FoL = R_fol * sqrt3; for (let i = 0; i < 6; i++) { offsets.push({ x: Rsqrt3_FoL * cos(PI / 6 + i * ang60), y: Rsqrt3_FoL * sin(PI / 6 + i * ang60), z: 0 }); } const R2_FoL = 2 * R_fol; for (let i = 0; i < 6; i++) { offsets.push({ x: R2_FoL * cos(i * ang60), y: R2_FoL * sin(i * ang60), z: 0 }); } break;
+                 case 'fruitOfLife': offsets.push({ x: 0, y: 0, z: 0 }); for (let i = 0; i < 6; i++) { offsets.push({ x: R_fol * cos(i * ang60), y: R_fol * sin(i * ang60), z: 0 }); } const Rsqrt3_Fruit = R_fol * sqrt3; for (let i = 0; i < 6; i++) { offsets.push({ x: Rsqrt3_Fruit * cos(PI / 6 + i * ang60), y: Rsqrt3_Fruit * sin(PI / 6 + i * ang60), z: 0 }); } break;
+                 case 'vesicaPiscis': offsets.push({ x: -R_fol / 2, y: 0, z: 0 }); offsets.push({ x: R_fol / 2, y: 0, z: 0 }); break;
+                 case 'tetrahedron': const st = S_3d * 0.6; offsets.push({ x: st, y: st, z: st }); offsets.push({ x: st, y: -st, z: -st }); offsets.push({ x: -st, y: st, z: -st }); offsets.push({ x: -st, y: -st, z: st }); break;
+                 case 'cube': const sc = S_3d * 0.6; for (let i = -1; i <= 1; i += 2) { for (let j = -1; j <= 1; j += 2) { for (let k = -1; k <= 1; k += 2) { offsets.push({ x: i * sc, y: j * sc, z: k * sc }); } } } break;
+                 case 'octahedron': const so = S_3d * 0.8; offsets.push({ x: so, y: 0, z: 0 }); offsets.push({ x: -so, y: 0, z: 0 }); offsets.push({ x: 0, y: so, z: 0 }); offsets.push({ x: 0, y: -so, z: 0 }); offsets.push({ x: 0, y: 0, z: so }); offsets.push({ x: 0, y: 0, z: -so }); break;
+                 case 'icosahedron': const si = S_3d * 0.5; offsets.push({x: 0, y: si, z: si * phiGolden}); offsets.push({x: 0, y: -si, z: si * phiGolden}); offsets.push({x: 0, y: si, z: -si * phiGolden}); offsets.push({x: 0, y: -si, z: -si * phiGolden}); offsets.push({y: 0, z: si, x: si * phiGolden}); offsets.push({y: 0, z: -si, x: si * phiGolden}); offsets.push({y: 0, z: si, x: -si * phiGolden}); offsets.push({y: 0, z: -si, x: -si * phiGolden}); offsets.push({z: 0, x: si, y: si * phiGolden}); offsets.push({z: 0, x: -si, y: si * phiGolden}); offsets.push({z: 0, x: si, y: -si * phiGolden}); offsets.push({z: 0, x: -si, y: -si * phiGolden}); break;
+                 case 'dodecahedron': const sd = S_3d * 0.4; const sd_phi = sd * phiGolden; const sd_phi_inv = sd / phiGolden; for (let i = -1; i <= 1; i += 2) { for (let j = -1; j <= 1; j += 2) { offsets.push({x: 0, y: i * sd_phi_inv, z: j * sd_phi }); offsets.push({y: 0, z: i * sd_phi_inv, x: j * sd_phi }); offsets.push({z: 0, x: i * sd_phi_inv, y: j * sd_phi }); for (let k = -1; k <= 1; k += 2) { offsets.push({ x: i * sd, y: j * sd, z: k * sd }); } } } break;
+                 case 'single': default: offsets.push({ x: 0, y: 0, z: 0 }); break;
+             }
+             return offsets;
+        }
+
+        // --- Torus Geometry Update ---
+        // ... (updateTorusGeometryMeshes remains the same)
+        function updateTorusGeometryMeshes() {
+            while (torusGeometryGroup.children.length > 0) { const child = torusGeometryGroup.children[0]; if (child.geometry) child.geometry.dispose(); torusGeometryGroup.remove(child); } if (!simState.showTorusGeometry) return;
+            let baseEffR = simState.torusRadius; let baseEffr = simState.tubeRadius;
+            if (simState.pulseAmplitude > 0 && simState.pulseFrequency > 0 && !simState.isPaused) { const time = clock.getElapsedTime(); const pf = simState.pulseAmplitude * Math.sin(time * simState.pulseFrequency * twoPi); baseEffR += pf; baseEffr += pf * 0.5; if (Math.abs(baseEffR) <= Math.abs(baseEffr)) { baseEffR = (Math.sign(baseEffR) || 1) * (Math.abs(baseEffr) + epsilon); } baseEffR = Math.sign(baseEffR) * Math.max(epsilon, Math.abs(baseEffR)); baseEffr = Math.sign(baseEffr) * Math.max(epsilon, Math.abs(baseEffr)); }
+            const geomR = Math.max(epsilon, Math.abs(baseEffR)); const geomr = Math.max(epsilon, Math.abs(baseEffr)); const offsets = getArrangementOffsets(simState.arrangementMode, simState.torusRadius); const radialSegments = 128; const tubularSegments = 64;
+            for (let i = 0; i < offsets.length; i++) { const offset = offsets[i]; const torusGeom = new THREE.TorusGeometry(geomR, geomr, radialSegments, tubularSegments); const torusMesh = new THREE.Mesh(torusGeom, torusWireframeMaterial); torusMesh.position.set(offset.x, offset.y, offset.z); if (simState.arrangementMode === 'flowerOfLife2D') { torusMesh.rotation.z = Math.PI / 6; } else { torusMesh.rotation.set(0, 0, 0); } torusGeometryGroup.add(torusMesh); }
+        }
+
+
+        // --- Particle System Creation (REVISED COUNT LOGIC) ---
+        // ... (createParticleSystem remains the same as v18.1)
+        function createParticleSystem() {
+             const oldSinglePS = scene.getObjectByName('particleSystem'); if (oldSinglePS) { if (oldSinglePS.geometry) oldSinglePS.geometry.dispose(); scene.remove(oldSinglePS); } while (arrangementGroup.children.length > 0) { const child = arrangementGroup.children[0]; if (child.geometry) child.geometry.dispose(); arrangementGroup.remove(child); } arrangementGroup.rotation.set(0, 0, 0);
+             let totalDiscreteParticles = 0; let nonDiscreteShellIndices = []; const numShellsTotal = simState.shellSettings.length; const shellParticleCounts = new Array(numShellsTotal).fill(0);
+             for (let i = 0; i < numShellsTotal; i++) { const settings = simState.shellSettings[i]; if (settings?.useDiscretePlacement && settings.discreteN > 0 && settings.discreteM > 0) { const count = settings.discreteN * settings.discreteM; shellParticleCounts[i] = count; totalDiscreteParticles += count; } else { nonDiscreteShellIndices.push(i); } }
+             const totalNonDiscreteParticles = (nonDiscreteShellIndices.length > 0) ? simState.userParticleCount : 0; let totalCalculatedParticles = totalDiscreteParticles + totalNonDiscreteParticles; totalCalculatedParticles = Math.min(totalCalculatedParticles, maxParticleCount);
+             if (totalNonDiscreteParticles > 0 && nonDiscreteShellIndices.length > 0) { let particlesToDistribute = totalNonDiscreteParticles; const numNonDiscrete = nonDiscreteShellIndices.length; const approxPerNonDiscrete = Math.floor(particlesToDistribute / numNonDiscrete); for(let k=0; k<numNonDiscrete; ++k) { const shellIdx = nonDiscreteShellIndices[k]; const countForThis = (k === numNonDiscrete - 1) ? particlesToDistribute : Math.min(approxPerNonDiscrete, particlesToDistribute); shellParticleCounts[shellIdx] = countForThis; particlesToDistribute -= countForThis; } totalCalculatedParticles = totalDiscreteParticles + (totalNonDiscreteParticles - particlesToDistribute); }
+             let finalTotalParticles = 0; for (let i=0; i<numShellsTotal; ++i) { const needed = shellParticleCounts[i]; const can_add = Math.max(0, maxParticleCount - finalTotalParticles); const actual_add = Math.min(needed, can_add); shellParticleCounts[i] = actual_add; finalTotalParticles += actual_add; }
+             simState.particleCount = finalTotalParticles;
+             toggleGlobalParticleCountSlider(nonDiscreteShellIndices.length > 0); updateDiscretePointsDisplay();
+             if (simState.particleCount <= 0) { console.log("No particles to create."); previousVelocities = null; if(particlesMaterial.map) { particlesMaterial.map.dispose(); particlesMaterial.map = null; } if(particlesMaterial.alphaMap) { particlesMaterial.alphaMap.dispose(); particlesMaterial.alphaMap = null; } particlesMaterial.needsUpdate = true; updateTorusGeometryMeshes(); return; }
+             arrangementGroup.visible = false;
+             if (simState.arrangementMode === 'single') { const singleGeom = createSingleTorusGeometry(shellParticleCounts); if (singleGeom && singleGeom.attributes.position.count > 0) { const singleMesh = new THREE.Points(singleGeom, particlesMaterial); singleMesh.name = 'particleSystem'; scene.add(singleMesh); } else { simState.particleCount = 0; } }
+             else { arrangementGroup.visible = true; const offsets = getArrangementOffsets(simState.arrangementMode, simState.torusRadius); const numObjects = offsets.length; if (numObjects === 0) { console.error("No offsets defined for mode:", simState.arrangementMode); simState.particleCount = 0; return; } let particlesInArrangement = 0; const totalParticlesPerObject = Math.max(1, Math.floor(simState.particleCount / numObjects)); let remainingTotalParticles = simState.particleCount; for (let i = 0; i < numObjects; i++) { const offset = offsets[i]; const countForThisObject = (i === numObjects - 1) ? remainingTotalParticles : Math.min(totalParticlesPerObject, remainingTotalParticles); const objectShellCounts = new Array(numShellsTotal).fill(0); let objectParticlesToDistribute = countForThisObject; if(simState.particleCount > 0) { for(let s=0; s < numShellsTotal; ++s) { const originalShellProportion = (shellParticleCounts[s] || 0) / simState.particleCount; const countForThisShellInObject = (s === numShellsTotal - 1) ? objectParticlesToDistribute : Math.min(Math.floor(countForThisObject * originalShellProportion), objectParticlesToDistribute); objectShellCounts[s] = Math.max(0, countForThisShellInObject); objectParticlesToDistribute -= objectShellCounts[s]; } } const torusGeom = createSingleTorusGeometry(objectShellCounts); if (torusGeom && torusGeom.attributes.position.count > 0) { const meshParticleCount = torusGeom.attributes.position.count; particlesInArrangement += meshParticleCount; const torusMesh = new THREE.Points(torusGeom, particlesMaterial); torusMesh.name = `torus_${i}`; torusMesh.position.set(offset.x, offset.y, offset.z); arrangementGroup.add(torusMesh); } remainingTotalParticles -= countForThisObject; } simState.particleCount = particlesInArrangement; if (simState.arrangementMode === 'flowerOfLife2D') { arrangementGroup.rotation.z = Math.PI / 6; } else { arrangementGroup.rotation.set(0,0,0); } }
+             if (!previousVelocities || previousVelocities.length !== simState.particleCount * 3) { previousVelocities = new Float32Array(simState.particleCount * 3); console.log("Initialized global previousVelocities array with size:", previousVelocities.length); } else { previousVelocities.fill(0); } updateTorusGeometryMeshes();
+        }
+
+        // --- Particle Geometry Creation (ADDED ATTRIBUTES) ---
+        // ... (createSingleTorusGeometry remains the same as v18.1)
+        function createSingleTorusGeometry(shellParticleCounts) {
+             const totalCount = shellParticleCounts.reduce((sum, count) => sum + count, 0); if (totalCount <= 0) return null; const count = Math.min(totalCount, maxParticleCount);
+             const posArray = new Float32Array(count * 3); const colorArray = new Float32Array(count * 4); const shellIndexArray = new Float32Array(count); const thetaIndexArray = new Float32Array(count); const phiIndexArray = new Float32Array(count);
+             const totalShells = simState.shellSettings.length; let particlesPlaced = 0; let baseTR = simState.torusRadius; let baseTuR = simState.tubeRadius; if (Math.abs(baseTR) <= Math.abs(baseTuR)) { baseTR = (Math.sign(baseTR) || 1) * (Math.abs(baseTuR) + epsilon); } let placeTR = Math.sign(baseTR) * Math.max(epsilon, Math.abs(baseTR)); let placeTuR = Math.sign(baseTuR) * Math.max(epsilon, Math.abs(baseTuR)); const maxXYRad = Math.abs(placeTR) + Math.abs(placeTuR);
+             while (simState.nestedShellColors.length < simState.numInnerTori) { simState.nestedShellColors.push(defaultNestedShellColors[simState.nestedShellColors.length % defaultNestedShellColors.length]); }
+             for (let shellIndex = 0; shellIndex < totalShells; shellIndex++) {
+                 const shellSettings = simState.shellSettings[shellIndex]; const countForThisShell = Math.min(shellParticleCounts[shellIndex] || 0, count - particlesPlaced); if (countForThisShell <= 0) continue;
+                 const shellRatio = Math.pow(simState.innerTorusRatio, shellIndex); let currentPlaceTR = placeTR * shellRatio; let currentPlaceTuR = placeTuR * shellRatio; if (Math.abs(currentPlaceTR) <= Math.abs(currentPlaceTuR)) { currentPlaceTR = (Math.sign(currentPlaceTR) || 1) * (Math.abs(currentPlaceTuR) + epsilon); } currentPlaceTR = Math.sign(currentPlaceTR) * Math.max(epsilon, Math.abs(currentPlaceTR)); currentPlaceTuR = Math.sign(currentPlaceTuR) * Math.max(epsilon, Math.abs(currentPlaceTuR)); let shellColorHex = (shellIndex === 0) ? simState.baseParticleColor : simState.nestedShellColors[shellIndex - 1];
+                 const useDiscrete = shellSettings.useDiscretePlacement; const discreteN = shellSettings.discreteN; const discreteM = shellSettings.discreteM; const geomStepN = useDiscrete ? twoPi / discreteN : 0; const geomStepM = useDiscrete ? twoPi / discreteM : 0; const numGridPoints = useDiscrete ? discreteN * discreteM : 0;
+                 for (let j = 0; j < countForThisShell; j++) {
+                     const i = particlesPlaced + j; let a1, a2; let ni = -1, mi = -1;
+                     if (useDiscrete && numGridPoints > 0) { const gridIndex = j % numGridPoints; mi = gridIndex % discreteM; ni = Math.floor(gridIndex / discreteM); a1 = mi * geomStepM; a2 = ni * geomStepN; }
+                     else { a1 = Math.random() * twoPi; a2 = Math.random() * twoPi; }
+                     const posIdx = i * 3; const colorIdx = i * 4; const cosA2 = Math.cos(a2); const x = (currentPlaceTR + currentPlaceTuR * cosA2) * Math.cos(a1); const y = (currentPlaceTR + currentPlaceTuR * cosA2) * Math.sin(a1); const z = currentPlaceTuR * Math.sin(a2);
+                     posArray[posIdx] = x; posArray[posIdx + 1] = y; posArray[posIdx + 2] = z; shellIndexArray[i] = shellIndex; thetaIndexArray[i] = ni; phiIndexArray[i] = mi;
+                     if (simState.colorMode === 'manualShell') { try { tempColor.set(shellColorHex); } catch (e) { tempColor.copy(defaultParticleColor); } if (simState.particleColorVariation > 0) { const variation = (Math.random() - 0.5) * 2 * simState.particleColorVariation; tempColor.offsetHSL(0, variation * 0.5, variation * 0.2); tempColor.r = Math.max(0, Math.min(1, tempColor.r)); tempColor.g = Math.max(0, Math.min(1, tempColor.g)); tempColor.b = Math.max(0, Math.min(1, tempColor.b)); } }
+                     else { switch (simState.colorMode) { case 'velocity': case 'directionChange': tempColor.setRGB(0.8,0.8,0.8); break; case 'poloidal': tempColor.setHSL(a2/twoPi, 1.0, 0.5); break; case 'radialTube': const nD=Math.abs(Math.sin(a2)); const v=1.0-nD*0.6; tempColor.setHSL(a1/twoPi, 1.0, Math.max(0.2,v)); break; case 'toroidal': tempColor.setHSL(a1/twoPi, 0.9, 0.55); break; case 'radialXY': const xyRad = Math.sqrt(x*x + y*y); tempColor.setHSL(0.7, 1.0, Math.min(1.0, xyRad / (maxXYRad + epsilon))); break; case 'distFromR': const distR = Math.abs(Math.sqrt(x*x + y*y) - currentPlaceTR); tempColor.setHSL(0.3, 1.0, Math.min(1.0, distR / (Math.abs(currentPlaceTuR) + epsilon))); break; case 'anglesHL': tempColor.setHSL(a1 / twoPi, 1.0, 0.5 + 0.4 * Math.sin(a2)); break; case 'eigenmodePhase': const phase=(simState.eigenmodeM*a2+simState.eigenmodeN*a1); tempColor.setHSL((phase/twoPi+1.0)%1.0, 1.0, 0.5); break; case 'xyz': const nX=(x/MAX_POS_EXTENT+1)/2; const nY=(y/MAX_POS_EXTENT+1)/2; const nZ=(z/MAX_POS_EXTENT+1)/2; tempColor.setRGB(Math.max(0,Math.min(1,nX)),Math.max(0,Math.min(1,nY)),Math.max(0,Math.min(1,nZ))); break; default: tempColor.copy(defaultParticleColor); } }
+                     colorArray[colorIdx] = tempColor.r; colorArray[colorIdx + 1] = tempColor.g; colorArray[colorIdx + 2] = tempColor.b; colorArray[colorIdx + 3] = 1.0;
+                 } particlesPlaced += countForThisShell;
+             }
+             const newGeom = new THREE.BufferGeometry(); newGeom.setAttribute('position', new THREE.BufferAttribute(posArray, 3)); newGeom.setAttribute('color', new THREE.BufferAttribute(colorArray, 4)); newGeom.setAttribute('shellIndex', new THREE.BufferAttribute(shellIndexArray, 1)); newGeom.setAttribute('thetaIndex', new THREE.BufferAttribute(thetaIndexArray, 1)); newGeom.setAttribute('phiIndex', new THREE.BufferAttribute(phiIndexArray, 1)); newGeom.computeBoundingSphere(); return newGeom;
+        }
+
+        // --- Particle Position & Opacity Update (USING ATTRIBUTES) ---
+        // ... (updateParticlePositions remains the same as v18.1)
+        function updateParticlePositions(mesh, currentGeom, baseEffR, baseEffr, delta, particleOffset) {
+             if (!currentGeom?.attributes?.position?.array || !currentGeom?.attributes?.color?.array || !currentGeom?.attributes?.shellIndex?.array || !currentGeom?.attributes?.thetaIndex?.array || !currentGeom?.attributes?.phiIndex?.array ) { console.error("Missing required particle attributes for update.", currentGeom?.attributes); return; } if (!previousVelocities || previousVelocities.length < (particleOffset + currentGeom.attributes.position.count) * 3) { console.error("PrevVelocities mismatch/uninit for mesh", mesh.name, "Required:", (particleOffset + currentGeom.attributes.position.count) * 3, "Available:", previousVelocities?.length); return; } if (delta <= 0) return;
+             const pos = currentGeom.attributes.position.array; const colors = currentGeom.attributes.color.array; const shellIndices = currentGeom.attributes.shellIndex.array; const thetaIndices = currentGeom.attributes.thetaIndex.array; const phiIndices = currentGeom.attributes.phiIndex.array; const colorAttribute = currentGeom.attributes.color; const posAttribute = currentGeom.attributes.position; const count = posAttribute.count;
+             let needsDynamicRGBUpdate = ( simState.colorMode !== 'manualShell' && (simState.colorMode === 'velocity' || simState.colorMode === 'directionChange' || simState.colorMode === 'eigenmodePhase' || simState.colorMode === 'xyz' || simState.colorMode === 'radialXY' || simState.colorMode === 'distFromR') );
+             const flowIntensity = simState.flowIntensity; const flowTwist = simState.flowTwist; const totalSpeedMag = flowIntensity * MAX_FLOW_SPEED; const twistDenom = Math.sqrt(1.0 + flowTwist * flowTwist); const base_v_p = totalSpeedMag / twistDenom; const base_v_t = flowTwist * base_v_p; const flowCouple = simState.flowCouplingFactor; const angMomEffect = simState.angularMomentumEffect; const approxAngMom = simState.approximateAngularMomentum; const windingPhi = simState.windingPhi; const windingTheta = simState.windingTheta; const doSoliton = simState.solitonPhasing > 0; const solCoh = simState.solitonPhasing; const doJitter = simState.jitterScale > 0; const jitterScale = simState.jitterScale; const doEigenmode = simState.visualizeEigenmode && simState.eigenmodeFlowStrength !== 0; const eigenStr = simState.eigenmodeFlowStrength; const eigenM = simState.eigenmodeM; const eigenN = simState.eigenmodeN; const deltaInv = 1.0 / (delta + epsilon); const innerTorusRatio = simState.innerTorusRatio; const doOpacityFromCam = simState.opacityFromCamera > 0; const doOpacityVariation = simState.particleOpacityVariation > 0; const maxDistanceForOpacity = initialCameraPosition.z * 1.5;
+             for(let i = 0; i < count; i++) {
+                 const idx = i * 3; const globalIdx = (particleOffset + i) * 3; const colorIdx = i * 4; const shellIndex = Math.round(shellIndices[i]); const currentShellSettings = simState.shellSettings[shellIndex]; if (!currentShellSettings) { console.warn(`Invalid shell index ${shellIndex} for particle ${i}`); continue; }
+                 const baseOpacity = currentShellSettings.particleOpacity; const useDiscrete = currentShellSettings.useDiscretePlacement; const discreteN = currentShellSettings.discreteN; const discreteM = currentShellSettings.discreteM; const stepN = useDiscrete ? twoPi / discreteN : 0; const stepM = useDiscrete ? twoPi / discreteM : 0; const doGridSnap = doSoliton && useDiscrete && thetaIndices[i] >= 0 && phiIndices[i] >= 0;
+                 const shellRatio = Math.pow(innerTorusRatio, shellIndex); let currentEffR = baseEffR * shellRatio; let currentEffr = baseEffr * shellRatio; if (Math.abs(currentEffR) <= Math.abs(currentEffr)) { currentEffR = (Math.sign(currentEffR) || 1) * (Math.abs(currentEffr) + epsilon); } currentEffR = Math.sign(currentEffR) * Math.max(epsilon, Math.abs(currentEffR)); currentEffr = Math.sign(currentEffr) * Math.max(epsilon, Math.abs(currentEffr));
+                 const x_o=pos[idx]; const y_o=pos[idx+1]; const z_o=pos[idx+2]; const vx_prev = previousVelocities[globalIdx]; const vy_prev = previousVelocities[globalIdx + 1]; const vz_prev = previousVelocities[globalIdx + 2]; prevVelVec.set(vx_prev, vy_prev, vz_prev);
+                 const rad_o=Math.sqrt(x_o*x_o+y_o*y_o); const a1_o=Math.atan2(y_o,x_o); const a2d_o = rad_o - currentEffR; const a2_o=Math.abs(a2d_o)<epsilon?(z_o>=0?Math.PI/2:-Math.PI/2):Math.atan2(z_o,a2d_o); const smFctr=Math.sin(a2_o); const signF = smFctr; const crxy_o = rad_o < epsilon ? epsilon : rad_o; let eigenmodeModulationFactor = 1.0;
+                 if(doEigenmode) { const phase = (eigenM * a2_o + eigenN * a1_o); eigenmodeModulationFactor = 1.0 + eigenStr * Math.cos(phase); eigenmodeModulationFactor = eigenmodeModulationFactor < 0.1 ? 0.1 : eigenmodeModulationFactor; if (simState.colorMode === 'eigenmodePhase') needsDynamicRGBUpdate = true; }
+                 const modulatedInwardSpeed = base_v_p * eigenmodeModulationFactor; const modulatedRotationalSpeed = base_v_t * eigenmodeModulationFactor; let effInwSpd = modulatedInwardSpeed; let baseRotationalVelocityMagnitude;
+                 if (approxAngMom) { const L_characteristic = Math.abs(modulatedRotationalSpeed * currentEffR); baseRotationalVelocityMagnitude = L_characteristic / crxy_o; } else { let spdF = 1.0; if (angMomEffect > 0) { const bRfs = currentEffR < epsilon ? epsilon : currentEffR; spdF = 1 + angMomEffect * (bRfs / crxy_o - 1); spdF = spdF < 0.1 ? 0.1 : (spdF > (angMomEffect + 1.5) ? (angMomEffect + 1.5) : spdF); } baseRotationalVelocityMagnitude = modulatedRotationalSpeed * spdF; }
+                 let baseRotSpd = signF * baseRotationalVelocityMagnitude; if (flowCouple !== 0) { const normRotSpeed = Math.abs(baseRotationalVelocityMagnitude) / (base_v_t + epsilon); const couplingEffectOnInward = flowCouple * normRotSpeed; effInwSpd *= (1.0 + couplingEffectOnInward); }
+                 let a1_step = baseRotSpd * delta; let a2_step = effInwSpd * delta; if(windingPhi !== 0) { a1_step += windingPhi * delta; } if(windingTheta !== 0) { a2_step += windingTheta * delta; } let a1_base = a1_o + a1_step; let a2_base = a2_o + a2_step;
+                 const cosA2_base = Math.cos(a2_base); const sinA2_base = Math.sin(a2_base); const rFactor = currentEffR + currentEffr * cosA2_base; const x_base = rFactor * Math.cos(a1_base); const y_base = rFactor * Math.sin(a1_base); const z_base = currentEffr * sinA2_base; let final_x = x_base; let final_y = y_base; let final_z = z_base;
+                 if(doSoliton) { let target_x, target_y, target_z; if(doGridSnap) { const target_mi = phiIndices[i]; const target_ni = thetaIndices[i]; const target_a1 = target_mi * stepM; const target_a2 = target_ni * stepN; const cos_a2_target = Math.cos(target_a2); const rFactor_target = currentEffR + currentEffr * cos_a2_target; target_x = rFactor_target * Math.cos(target_a1); target_y = rFactor_target * Math.sin(target_a1); target_z = currentEffr * Math.sin(target_a2); } else { target_x = x_base; target_y = y_base; target_z = z_base; } const devX = target_x - final_x; const devY = target_y - final_y; const devZ = target_z - final_z; final_x += devX * solCoh; final_y += devY * solCoh; final_z += devZ * solCoh; }
+                 let calc_x = final_x; let calc_y = final_y; let calc_z = final_z; if (doJitter) { calc_x += randomOffset(jitterScale); calc_y += randomOffset(jitterScale); calc_z += randomOffset(jitterScale); }
+                 const render_x = calc_x; const render_y = calc_y; const render_z = calc_z; pos[idx] = render_x; pos[idx + 1] = render_y; pos[idx + 2] = render_z;
+                 const dx = calc_x - x_o; const dy = calc_y - y_o; const dz = calc_z - z_o; const vx_curr = dx * deltaInv; const vy_curr = dy * deltaInv; const vz_curr = dz * deltaInv; currVelVec.set(vx_curr, vy_curr, vz_curr); previousVelocities[globalIdx] = vx_curr; previousVelocities[globalIdx + 1] = vy_curr; previousVelocities[globalIdx + 2] = vz_curr;
+                 let currentAlpha = baseOpacity; if (doOpacityVariation) { const variationAmount = Math.random() * simState.particleOpacityVariation; currentAlpha *= (1.0 - variationAmount); } if (doOpacityFromCam) { tempVec3.set(render_x, render_y, render_z); mesh.localToWorld(tempVec3); const dist = tempVec3.distanceTo(camera.position); const distFactor = Math.min(1.0, dist / maxDistanceForOpacity); const opacityMultiplier = lerp(1.0, 0.0, distFactor * simState.opacityFromCamera); currentAlpha *= opacityMultiplier; } currentAlpha = Math.max(0.0, Math.min(1.0, currentAlpha));
+                 if (needsDynamicRGBUpdate) { tempColor.setRGB(colors[colorIdx], colors[colorIdx + 1], colors[colorIdx + 2]); const final_a1 = Math.atan2(render_y, render_x); const final_rad = Math.sqrt(render_x*render_x + render_y*render_y); const final_a2_d = final_rad - currentEffR; const final_a2 = Math.abs(final_a2_d)<epsilon?(render_z>=0?Math.PI/2:-Math.PI/2):Math.atan2(render_z,final_a2_d); if (simState.colorMode === 'velocity') { const speed = currVelVec.length(); if (isFinite(speed)){ const ns = Math.min(1.0, speed / (MAX_EXPECTED_SPEED || 1)); tempColor.setHSL(0.66 - ns * 0.66, 1.0, 0.5); } else { tempColor.setRGB(1, 0, 1); } } else if (simState.colorMode === 'directionChange') { let normalizedAngle = 0; const prevLenSq = prevVelVec.lengthSq(); const currLenSq = currVelVec.lengthSq(); if (prevLenSq > epsilon && currLenSq > epsilon) { normPrev.copy(prevVelVec).normalize(); normCurr.copy(currVelVec).normalize(); const dot = normPrev.dot(normCurr); normalizedAngle = (1.0 - Math.max(-1.0, Math.min(1.0, dot))) * 0.5; } tempColor.setHSL(0.66 - normalizedAngle * 0.66, 1.0, 0.5); } else if (simState.colorMode === 'eigenmodePhase' && doEigenmode) { const phase = (eigenM * final_a2 + eigenN * final_a1); tempColor.setHSL((phase / twoPi + 1.0) % 1.0, 1.0, 0.5); } else if (simState.colorMode === 'xyz') { const nX=(render_x/MAX_POS_EXTENT+1)/2; const nY=(render_y/MAX_POS_EXTENT+1)/2; const nZ=(render_z/MAX_POS_EXTENT+1)/2; tempColor.setRGB(Math.max(0,Math.min(1,nX)),Math.max(0,Math.min(1,nY)),Math.max(0,Math.min(1,nZ))); } else if (simState.colorMode === 'radialXY') { const xyRad = Math.sqrt(render_x*render_x + render_y*render_y); const maxXYRad = Math.abs(currentEffR) + Math.abs(currentEffr); tempColor.setHSL(0.7, 1.0, Math.min(1.0, xyRad / (maxXYRad + epsilon))); } else if (simState.colorMode === 'distFromR') { const distR = Math.abs(Math.sqrt(render_x*render_x + render_y*render_y) - currentEffR); tempColor.setHSL(0.3, 1.0, Math.min(1.0, distR / (Math.abs(currentEffr) + epsilon))); } colors[colorIdx] = tempColor.r; colors[colorIdx + 1] = tempColor.g; colors[colorIdx + 2] = tempColor.b; }
+                 colors[colorIdx + 3] = currentAlpha;
+             }
+             posAttribute.needsUpdate = true; colorAttribute.needsUpdate = true;
+        }
+
+
+        // --- UI Update Functions ---
+        // ... (Minor UI functions remain the same)
+        function updateEigenmodeControlsVisibility() { document.getElementById('eigenmode-controls')?.classList.toggle('visible', simState.visualizeEigenmode); }
+        function updateManualColorControlsVisibility() { document.getElementById('manual-color-controls')?.classList.toggle('visible', simState.colorMode === 'manualShell'); }
+        function updateDiscretePointsDisplay() { const totalPointsSpan = document.getElementById('discreteTotalPoints'); if (totalPointsSpan) { totalPointsSpan.textContent = simState.particleCount > 0 ? simState.particleCount.toLocaleString() : '0'; } }
+        let fadeTimeoutId = null;
+        function toggleUI(visible) { const c = document.getElementById('controls'); const sB = document.getElementById('showUIButton'); const tB = document.getElementById('toggleUIButton'); if (!c || !sB || !tB) return; clearTimeout(fadeTimeoutId); sB.classList.remove('faded-out'); simState.uiVisible = visible; if (visible) { c.style.opacity = '1'; c.style.pointerEvents = 'auto'; c.style.transform = 'translateX(0)'; sB.classList.remove('visible'); tB.textContent = 'Hide UI'; } else { c.style.opacity = '0'; c.style.pointerEvents = 'none'; c.style.transform = 'translateX(-20px)'; sB.classList.add('visible'); tB.textContent = 'Show UI'; fadeTimeoutId = setTimeout(() => { sB.classList.add('faded-out'); }, 3000); } }
+        function updateComposerPasses() { composer.passes = [renderPass]; if (simState.enableTrails && afterimagePass) { composer.addPass(afterimagePass); } if (simState.enableBloom && bloomPass) { composer.addPass(bloomPass); } console.log("Composer passes updated. Trails:", simState.enableTrails, "Bloom:", simState.enableBloom); }
+        function toggleGlobalParticleCountSlider(enabled) { const slider = document.getElementById('particleCount'); const label = document.getElementById('particleCountLabel'); const numberInput = document.getElementById('particleCountNumber'); const container = slider?.closest('.slider-container'); const isDisabled = !enabled; if (slider) slider.disabled = isDisabled; if (numberInput) numberInput.disabled = isDisabled; if (label) { label.classList.toggle('disabled', isDisabled); label.title = enabled ? "Total particles for shells set to 'Random'" : "Disabled (Total particles determined by N*M of discrete shells)"; label.style.cursor = enabled ? 'help' : 'not-allowed'; } if(numberInput) { numberInput.style.opacity = isDisabled ? '0.5' : '1'; } const unitSpan = numberInput?.nextElementSibling; if (unitSpan && unitSpan.tagName === 'SPAN') { unitSpan.style.opacity = isDisabled ? '0.5' : '1'; } if(container) { container.style.opacity = isDisabled ? '0.5' : '1'; } }
+        function toggleStats(visible) { simState.showStats = visible; if (statsContainer) { statsContainer.style.display = visible ? 'block' : 'none'; } }
+        function handleInteraction() { const sB = document.getElementById('showUIButton'); if (sB && sB.classList.contains('visible') && !sB.classList.contains('faded-out')) { clearTimeout(fadeTimeoutId); fadeTimeoutId = setTimeout(() => { sB.classList.add('faded-out'); }, 3000); } }
+
+
+        // --- Dynamic Per-Shell UI Control Management (ADDED LINK ICON) ---
+        // ... (updateShellControlsUI, createSliderWithNumber, handleShellLinkIconClick, syncShellNM, handleDynamicShellInputChange remain the same as v18.1)
+         const shellControlsContainer = document.getElementById('shell-controls-container');
+        const debouncedRebuildForShellChange = debounce(() => { console.log("Rebuilding particles due to shell setting change (debounced)..."); createParticleSystem(); }, 350);
+        function updateShellControlsUI() {
+            if (!shellControlsContainer) return; shellControlsContainer.innerHTML = ''; const numShellsTotal = simState.numInnerTori + 1;
+            while (simState.shellSettings.length < numShellsTotal) { simState.shellSettings.push(JSON.parse(JSON.stringify(defaultShellSetting))); } if (simState.shellSettings.length > numShellsTotal) { simState.shellSettings = simState.shellSettings.slice(0, numShellsTotal); }
+            while (simState.nestedShellColors.length < simState.numInnerTori) { simState.nestedShellColors.push(defaultNestedShellColors[simState.nestedShellColors.length % defaultNestedShellColors.length]); } if (simState.nestedShellColors.length > simState.numInnerTori) { simState.nestedShellColors = simState.nestedShellColors.slice(0, simState.numInnerTori); }
+            let anyShellIsRandom = false;
+            for (let i = 0; i < numShellsTotal; i++) {
+                const shellIndex = i; const shellSettings = simState.shellSettings[shellIndex]; if (!shellSettings) continue; if (!shellSettings.useDiscretePlacement) { anyShellIsRandom = true; }
+                const groupDiv = document.createElement('div'); groupDiv.className = 'shell-control-group'; groupDiv.id = `shell-group-${shellIndex}`; const header = document.createElement('h6'); header.textContent = (shellIndex === 0) ? 'Base Shell (0) Settings' : `Nested Shell ${shellIndex} Settings`; groupDiv.appendChild(header);
+                const colorContainer = document.createElement('div'); colorContainer.className = 'color-picker-container'; const colorLabel = document.createElement('label'); colorLabel.textContent = 'Color:'; colorLabel.htmlFor = `shell-color-${shellIndex}`; const colorPicker = document.createElement('input'); colorPicker.type = 'color'; colorPicker.id = `shell-color-${shellIndex}`; colorPicker.dataset.shellIndex = shellIndex; colorPicker.value = (shellIndex === 0) ? simState.baseParticleColor : simState.nestedShellColors[shellIndex - 1]; colorPicker.title = `Color for Shell ${shellIndex}`; colorPicker.addEventListener('input', (e) => { handleInteraction(); const index = parseInt(e.target.dataset.shellIndex); const newColor = e.target.value; if (index === 0) { simState.baseParticleColor = newColor; } else if (index > 0 && simState.nestedShellColors.length >= index) { simState.nestedShellColors[index - 1] = newColor; } if (simState.colorMode === 'manualShell') { debouncedRebuildForShellChange(); } debouncedAutoSave(); }); colorContainer.appendChild(colorLabel); colorContainer.appendChild(colorPicker); groupDiv.appendChild(colorContainer);
+                const opacityContainer = createSliderWithNumber(`shell-opacity-${shellIndex}`, 'Base Opacity:', 0.0, 1.0, 0.01, shellSettings.particleOpacity, `Base opacity for Shell ${shellIndex}`, shellIndex, 'particleOpacity'); groupDiv.appendChild(opacityContainer);
+                const discreteCheckContainer = document.createElement('div'); discreteCheckContainer.className = 'checkbox-container'; const discreteCheckbox = document.createElement('input'); discreteCheckbox.type = 'checkbox'; discreteCheckbox.id = `shell-discrete-${shellIndex}`; discreteCheckbox.checked = shellSettings.useDiscretePlacement; discreteCheckbox.dataset.shellIndex = shellIndex; discreteCheckbox.dataset.settingKey = 'useDiscretePlacement'; const discreteLabel = document.createElement('label'); discreteLabel.htmlFor = `shell-discrete-${shellIndex}`; discreteLabel.textContent = 'Use Discrete Grid (N x M)'; discreteLabel.title = `Place particles on a grid for Shell ${shellIndex}`; discreteCheckbox.addEventListener('change', (e) => { handleInteraction(); const index = parseInt(e.target.dataset.shellIndex); const isChecked = e.target.checked; if (simState.shellSettings[index]) { simState.shellSettings[index].useDiscretePlacement = isChecked; const nmControls = document.getElementById(`shell-nm-controls-${index}`); if (nmControls) { nmControls.classList.toggle('visible', isChecked); } debouncedRebuildForShellChange(); debouncedAutoSave(); } }); discreteCheckContainer.appendChild(discreteCheckbox); discreteCheckContainer.appendChild(discreteLabel); groupDiv.appendChild(discreteCheckContainer);
+                const nmControlsDiv = document.createElement('div'); nmControlsDiv.id = `shell-nm-controls-${shellIndex}`; nmControlsDiv.className = 'shell-discrete-controls'; nmControlsDiv.classList.toggle('visible', shellSettings.useDiscretePlacement);
+                const linkWrapper = document.createElement('div'); linkWrapper.className = 'shell-nm-link-wrapper'; const linkIcon = document.createElement('span'); linkIcon.id = `shell-link-icon-${shellIndex}`; linkIcon.className = 'shell-slider-link-icon'; linkIcon.dataset.shellIndex = shellIndex; linkIcon.textContent = shellSettings.discreteSlidersLinked ? '🔒' : '🔗'; linkIcon.title = shellSettings.discreteSlidersLinked ? 'Unlink N and M sliders' : 'Link N and M sliders'; linkIcon.classList.toggle('active', shellSettings.discreteSlidersLinked); linkIcon.addEventListener('click', handleShellLinkIconClick); const linkLabel = document.createTextNode(' Link N/M'); linkWrapper.appendChild(linkIcon); linkWrapper.appendChild(linkLabel); nmControlsDiv.appendChild(linkWrapper);
+                const nContainer = createSliderWithNumber(`shell-N-${shellIndex}`, 'N (Poloidal):', 4, 1280, 1, shellSettings.discreteN, 'Number of poloidal segments', shellIndex, 'discreteN'); const mContainer = createSliderWithNumber(`shell-M-${shellIndex}`, 'M (Toroidal):', 4, 1280, 1, shellSettings.discreteM, 'Number of toroidal segments', shellIndex, 'discreteM');
+                nmControlsDiv.appendChild(nContainer); nmControlsDiv.appendChild(mContainer); groupDiv.appendChild(nmControlsDiv); shellControlsContainer.appendChild(groupDiv);
+            }
+            toggleGlobalParticleCountSlider(anyShellIsRandom);
+        }
+        function handleShellLinkIconClick(e) { handleInteraction(); const icon = e.target; const shellIndex = parseInt(icon.dataset.shellIndex); if (isNaN(shellIndex) || !simState.shellSettings[shellIndex]) return; const shellSettings = simState.shellSettings[shellIndex]; shellSettings.discreteSlidersLinked = !shellSettings.discreteSlidersLinked; icon.textContent = shellSettings.discreteSlidersLinked ? '🔒' : '🔗'; icon.title = shellSettings.discreteSlidersLinked ? 'Unlink N and M sliders' : 'Link N and M sliders'; icon.classList.toggle('active', shellSettings.discreteSlidersLinked); if (shellSettings.discreteSlidersLinked) { syncShellNM(shellIndex, 'discreteN'); } debouncedAutoSave(); }
+        function syncShellNM(shellIndex, sourceKey) { const shellSettings = simState.shellSettings[shellIndex]; if (!shellSettings || !shellSettings.discreteSlidersLinked) return; const targetKey = (sourceKey === 'discreteN') ? 'discreteM' : 'discreteN'; const sourceValue = parseFloat(shellSettings[sourceKey]); const targetRangeElement = document.getElementById(`shell-${targetKey.slice(-1)}-${shellIndex}`); const targetNumberElement = document.getElementById(`shell-${targetKey.slice(-1)}-${shellIndex}Number`); if (!targetRangeElement || !targetNumberElement) return; const props = getNumberInputProps(targetRangeElement); let targetValue = sourceValue; targetValue = Math.min(props.max ?? Infinity, Math.max(props.min ?? -Infinity, targetValue)); if (props.step && props.step > 0) { const invStep = 1.0 / props.step; targetValue = Math.round(targetValue * invStep) / invStep; } if (targetValue !== shellSettings[targetKey]) { shellSettings[targetKey] = targetValue; targetRangeElement.value = targetValue; targetNumberElement.value = targetValue.toFixed((props.step.toString().split('.')[1] || '').length); debouncedRebuildForShellChange(); } }
+        function createSliderWithNumber(baseId, labelText, min, max, step, value, title, shellIndex, settingKey) { const container = document.createElement('div'); container.className = 'slider-container'; const label = document.createElement('label'); label.textContent = labelText; label.htmlFor = baseId; label.title = title; const rangeInput = document.createElement('input'); rangeInput.type = 'range'; rangeInput.id = baseId; rangeInput.min = min; rangeInput.max = max; rangeInput.step = step; rangeInput.value = value; rangeInput.dataset.shellIndex = shellIndex; rangeInput.dataset.settingKey = settingKey; const numberInput = document.createElement('input'); numberInput.type = 'number'; numberInput.className = 'slider-number-input'; numberInput.id = `${baseId}Number`; numberInput.min = min; numberInput.max = max; numberInput.step = step; numberInput.value = value; numberInput.dataset.shellIndex = shellIndex; numberInput.dataset.settingKey = settingKey; const span = document.createElement('span'); [rangeInput, numberInput].forEach(el => { el.addEventListener('input', handleDynamicShellInputChange); el.addEventListener('change', handleDynamicShellInputChange); }); container.appendChild(label); container.appendChild(rangeInput); container.appendChild(numberInput); container.appendChild(span); return container; }
+        function handleDynamicShellInputChange(e) { handleInteraction(); const target = e.target; const shellIndex = parseInt(target.dataset.shellIndex); const settingKey = target.dataset.settingKey; const isNumberInput = target.type === 'number'; const isRangeInput = target.type === 'range'; if (isNaN(shellIndex) || !settingKey || !simState.shellSettings[shellIndex]) { console.error("Missing data attribute on dynamic control:", target.id); return; } let value = target.value; let processedValue; let needsRebuild = false; if (isRangeInput || isNumberInput) { const numVal = parseFloat(value); const props = getNumberInputProps(target); processedValue = isNaN(numVal) ? simState.shellSettings[shellIndex][settingKey] : Math.min(props.max ?? Infinity, Math.max(props.min ?? -Infinity, numVal)); if (props.step > 0) { const invStep = 1.0 / props.step; processedValue = Math.round(processedValue * invStep) / invStep; } const baseId = target.id.replace('Number', ''); const rangeEl = document.getElementById(baseId); const numberEl = document.getElementById(`${baseId}Number`); if (rangeEl) rangeEl.value = processedValue; if (numberEl) numberEl.value = parseFloat(processedValue).toFixed((props.step.toString().split('.')[1] || '').length); if (settingKey === 'discreteN' || settingKey === 'discreteM') { needsRebuild = true; } } else { processedValue = value; } if (simState.shellSettings[shellIndex][settingKey] !== processedValue) { simState.shellSettings[shellIndex][settingKey] = processedValue; if ((settingKey === 'discreteN' || settingKey === 'discreteM') && simState.shellSettings[shellIndex].discreteSlidersLinked) { syncShellNM(shellIndex, settingKey); needsRebuild = true; } if (needsRebuild) { debouncedRebuildForShellChange(); } debouncedAutoSave(); } }
+
+
+        // --- Animation Loop ---
+        // ... (animate remains the same)
+        function animate() { if (simState.showStats) stats.begin(); frameCount++; requestAnimationFrame(animate); const delta = clock.getDelta(); let simDelta = delta * simState.simSpeed; if (simState.isPaused) { simDelta = 0; } const elapsedTime = clock.getElapsedTime(); let baseEffR = simState.torusRadius; let baseEffr = simState.tubeRadius; let pulseActive = simState.pulseAmplitude > 0 && simState.pulseFrequency > 0; if (pulseActive && !simState.isPaused) { const time = elapsedTime; const pf = simState.pulseAmplitude * Math.sin(time * simState.pulseFrequency * twoPi); baseEffR += pf; baseEffr += pf * 0.5; if (Math.abs(baseEffR) <= Math.abs(baseEffr)) { baseEffR = (Math.sign(baseEffR) || 1) * (Math.abs(baseEffr) + epsilon); } baseEffR = Math.sign(baseEffR) * Math.max(epsilon, Math.abs(baseEffR)); baseEffr = Math.sign(baseEffr) * Math.max(epsilon, Math.abs(baseEffr)); } if (simDelta > 0) { if (simState.arrangementMode === 'single') { const ps = scene.getObjectByName('particleSystem'); if (ps?.geometry) { updateParticlePositions(ps, ps.geometry, baseEffR, baseEffr, simDelta, 0); } } else { let cumulativeOffset = 0; arrangementGroup.children.forEach(mesh => { if (mesh.geometry) { updateParticlePositions(mesh, mesh.geometry, baseEffR, baseEffr, simDelta, cumulativeOffset); cumulativeOffset += mesh.geometry.attributes.position.count; } }); } if (simState.showTorusGeometry && pulseActive && !simState.isPaused) { updateTorusGeometryMeshes(); } } simState.cameraRotation.x = angleLerp(simState.cameraRotation.x, simState.targetCameraRotation.x, cameraTransitionSpeed); simState.cameraRotation.y = angleLerp(simState.cameraRotation.y, simState.targetCameraRotation.y, cameraTransitionSpeed); const { x: rotX, y: rotY } = simState.cameraRotation; const camZDist = simState.cameraPosition.z; const camX = camZDist * Math.sin(rotY) * Math.cos(rotX); const camY = camZDist * Math.sin(rotX); const camZ = camZDist * Math.cos(rotY) * Math.cos(rotX); camera.position.set(camX, camY, camZ); camera.up.copy(worldUp); camera.lookAt(scene.position); composer.render(delta); if (simState.showStats) stats.end(); }
+
+
+        // --- Control Configuration (Globals Only) ---
+        // ... (controlsConfig remains the same)
+        // (Copy from previous version)
+         const controlsConfig = {
+            flowIntensity: { stateVar: 'flowIntensity', type: 'range', numberId: 'flowIntensityNumber', format: v => v.toFixed(2) }, flowTwist: { stateVar: 'flowTwist', type: 'range', numberId: 'flowTwistNumber', format: v => v.toFixed(1) }, flowCouplingFactor: { stateVar: 'flowCouplingFactor', type: 'range', numberId: 'flowCouplingFactorNumber', format: v => v.toFixed(2) }, angularMomentumEffect: { stateVar: 'angularMomentumEffect', type: 'range', numberId: 'angularMomentumEffectNumber', format: v => v.toFixed(2) }, approximateAngularMomentum: { stateVar: 'approximateAngularMomentum', type: 'checkbox', eventType: 'change' }, windingTheta: { stateVar: 'windingTheta', type: 'range', numberId: 'windingThetaNumber', format: v => parseInt(v).toString() }, windingPhi: { stateVar: 'windingPhi', type: 'range', numberId: 'windingPhiNumber', format: v => parseInt(v).toString() }, solitonPhasing: { stateVar: 'solitonPhasing', type: 'range', numberId: 'solitonPhasingNumber', format: v => v.toFixed(4) }, jitterScale: { stateVar: 'jitterScale', type: 'range', numberId: 'jitterScaleNumber', format: v => v.toFixed(1) }, visualizeEigenmode: { stateVar: 'visualizeEigenmode', type: 'checkbox', eventType: 'change', effect: (v) => { updateEigenmodeControlsVisibility(); if(simState.colorMode === 'eigenmodePhase') {createParticleSystem();} } }, eigenmodeM: { stateVar: 'eigenmodeM', type: 'number', eventType: 'input', effect: () => { if(simState.colorMode === 'eigenmodePhase' && simState.visualizeEigenmode) {createParticleSystem();} } }, eigenmodeN: { stateVar: 'eigenmodeN', type: 'number', eventType: 'input', effect: () => { if(simState.colorMode === 'eigenmodePhase' && simState.visualizeEigenmode) {createParticleSystem();} } }, eigenmodeFlowStrength: { stateVar: 'eigenmodeFlowStrength', type: 'range', numberId: 'eigenmodeFlowStrengthNumber', format: v => v.toFixed(2) }, arrangementMode: { stateVar: 'arrangementMode', type: 'select', eventType: 'change', changeEffect: (v) => { createParticleSystem(); } }, showTorusGeometry: { stateVar: 'showTorusGeometry', type: 'checkbox', eventType: 'change', changeEffect: updateTorusGeometryMeshes }, tubeRadius: { stateVar: 'tubeRadius', type: 'range', numberId: 'tubeRadiusNumber', format: v => parseInt(v).toString(), eventType: 'input', changeEffect: (v, debounce) => { debounce(() => {createParticleSystem();}, 300)(); } }, torusRadius: { stateVar: 'torusRadius', type: 'range', numberId: 'torusRadiusNumber', format: v => parseInt(v).toString(), eventType: 'input', changeEffect: (v, debounce) => { debounce(() => {createParticleSystem();}, 300)(); } }, pulseAmplitude: { stateVar: 'pulseAmplitude', type: 'range', numberId: 'pulseAmplitudeNumber', format: v => parseInt(v).toString(), changeEffect: (v, debounce) => { debounce(updateTorusGeometryMeshes, 50)(); } }, pulseFrequency: { stateVar: 'pulseFrequency', type: 'range', numberId: 'pulseFrequencyNumber', format: v => v.toFixed(2), changeEffect: (v, debounce) => { debounce(updateTorusGeometryMeshes, 50)(); } }, numInnerTori: { stateVar: 'numInnerTori', type: 'range', numberId: 'numInnerToriNumber', format: v => parseInt(v).toString(), eventType: 'input', changeEffect: (v, debounceFn) => { updateShellControlsUI(); debounceFn(() => {createParticleSystem();}, 300)(); } }, innerTorusRatio: { stateVar: 'innerTorusRatio', type: 'range', numberId: 'innerTorusRatioNumber', format: v => v.toFixed(2), eventType: 'input', changeEffect: (v, debounce) => { debounce(() => {createParticleSystem();}, 300)(); } }, particleCount: { stateVar: 'userParticleCount', type: 'range', numberId: 'particleCountNumber', format: v => (v/1000).toFixed(0), eventType: 'input', changeEffect: (v, debounce) => { const anyRandom = simState.shellSettings.some(s=>!s.useDiscretePlacement); if (anyRandom) { debounce(() => {createParticleSystem();}, 300)(); } } }, particleSize: { stateVar: 'particleSize', type: 'range', numberId: 'particleSizeNumber', format: v => v.toFixed(1), effect: (v) => { if(particlesMaterial) particlesMaterial.size = v; } }, energyIntensity: { stateVar: 'energyIntensity', type: 'range', numberId: 'energyIntensityNumber', format: v => parseInt(v).toString() }, particleOpacityVariation: { stateVar: 'particleOpacityVariation', type: 'range', numberId: 'particleOpacityVariationNumber', format: v => v.toFixed(2) }, opacityFromCamera: { stateVar: 'opacityFromCamera', type: 'range', numberId: 'opacityFromCameraNumber', format: v => v.toFixed(2) }, colorMode: { stateVar: 'colorMode', type: 'select', eventType: 'change', changeEffect: () => { updateManualColorControlsVisibility(); createParticleSystem(); } }, particleColorVariation: { stateVar: 'particleColorVariation', type: 'range', numberId: 'particleColorVariationNumber', format: v => v.toFixed(2), changeEffect: (v, debounce) => { if(simState.colorMode === 'manualShell') { debounce(() => {createParticleSystem();}, 300)(); } } }, enableTrails: { stateVar: 'enableTrails', type: 'checkbox', eventType: 'change', effect: updateComposerPasses }, trailDecay: { stateVar: 'trailDecay', type: 'range', numberId: 'trailDecayNumber', format: v => v.toFixed(3), effect: (v) => { if(afterimagePass) afterimagePass.uniforms["damp"].value = v; } }, enableBloom: { stateVar: 'enableBloom', type: 'checkbox', eventType: 'change', effect: updateComposerPasses }, simSpeed: { stateVar: 'simSpeed', type: 'range', numberId: 'simSpeedNumber', format: v => v.toFixed(1) },
+         };
+
+
+        // --- Helper to set state value (Globals Only) ---
+        // ... (setStateValue remains the same)
+        function setStateValue(stateVar, value, type) { if (type === 'range' || type === 'number' || type === 'number-input') { const num = parseFloat(value); simState[stateVar] = isNaN(num) ? simState[stateVar] : num; } else if (type === 'checkbox') { simState[stateVar] = !!value; } else { simState[stateVar] = value; } if (['windingTheta', 'windingPhi', 'eigenmodeM', 'eigenmodeN', 'numInnerTori', 'energyIntensity', 'tubeRadius', 'torusRadius', 'pulseAmplitude'].includes(stateVar)) { const parsedInt = parseInt(simState[stateVar]); simState[stateVar] = isNaN(parsedInt) ? 0 : parsedInt; } if (stateVar === 'simSpeed') { simState[stateVar] = Math.max(0.01, parseFloat(simState[stateVar]) || 0.1); } if (stateVar === 'numInnerTori') { simState[stateVar] = Math.max(0, Math.min(6, simState[stateVar])); } }
+
+        // --- Helper to update control value (Globals Only) ---
+        // ... (updateControlValue remains the same)
+        function updateControlValue(id, value, config) { const element = document.getElementById(id); if (!element || !config) return; const isCheckbox = config.type === 'checkbox'; const isSlider = config.type === 'range'; const isSelect = config.type === 'select'; const isTextInput = config.type === 'text'; const isNumberInputOnly = config.type === 'number'; const isColorPicker = config.type === 'color'; let numValue = parseFloat(value); if (isCheckbox) { element.checked = !!value; } else if (isColorPicker) { element.value = value; } else { if (!isNaN(numValue)) { element.value = numValue; } else if (isSelect || isTextInput) { element.value = value; } else if (isNumberInputOnly) { element.value = value; } } const parentContainer = element.closest('.slider-container, .animation-controls, .input-container, .color-picker-container'); const label = parentContainer?.querySelector('label[for="' + id + '"]'); const numberInput = config.numberId ? document.getElementById(config.numberId) : null; const unitSpan = numberInput?.nextElementSibling; if (numberInput && (isSlider || isNumberInputOnly || id === config.numberId || id === 'simSpeed' || id === 'simSpeedNumber')) { let valueToFormat = parseFloat(simState[config.stateVar]); if (config.stateVar === 'userParticleCount') { valueToFormat /= 1000; } if (!isNaN(valueToFormat) && config.format) { const formattedValueString = config.format(valueToFormat); const numStep = parseFloat(numberInput.step) || 0.01; const decimals = Math.max(0, (numStep.toString().split('.')[1] || '').length); let finalDisplayValue = parseFloat(formattedValueString); if (!isNaN(finalDisplayValue)) { numberInput.value = finalDisplayValue.toFixed(decimals); } else { numberInput.value = parseFloat(value).toFixed(decimals); } } else { const primaryElement = isSlider ? element : document.getElementById(id.replace('Number','')); const sliderStep = primaryElement ? parseFloat(primaryElement.step) : 0.01; const fallbackDecimals = (sliderStep.toString().split('.')[1] || '').length; numberInput.value = isNaN(numValue) ? '' : numValue.toFixed(fallbackDecimals); } } const primaryElement = document.getElementById(id); const isDisabled = primaryElement ? primaryElement.disabled : false; if (label) { label.style.opacity = isDisabled ? '0.5' : '1'; label.style.cursor = isDisabled ? 'not-allowed' : 'help'; if (isColorPicker) label.style.cursor = isDisabled ? 'not-allowed' : 'pointer'; } if(numberInput) { numberInput.style.opacity = isDisabled ? '0.5' : '1'; } if (unitSpan && unitSpan.tagName === 'SPAN') { unitSpan.style.opacity = isDisabled ? '0.5' : '1'; } if (isCheckbox) { const checkboxLabel = element.nextElementSibling; if (checkboxLabel && checkboxLabel.tagName === 'LABEL') { checkboxLabel.style.opacity = isDisabled ? '0.5' : '1'; checkboxLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer'; } } }
+
+
+        // --- initializeUI ---
+        // ... (initializeUI remains the same)
+         function initializeUI() { console.log(`Initializing UI from simState (v${localStorageKeyPrefix.split('_v')[1]}...`); for (const id in controlsConfig) { const config = controlsConfig[id]; if (simState.hasOwnProperty(config.stateVar)) { updateControlValue(id, simState[config.stateVar], config); } else { console.warn(`Global state variable '${config.stateVar}' not found for control '${id}'.`); } } updateShellControlsUI(); updateEigenmodeControlsVisibility(); updateManualColorControlsVisibility(); updateDiscretePointsDisplay(); updateComposerPasses(); document.getElementById('playPauseButton').textContent = simState.isPaused ? 'Play' : 'Pause'; toggleUI(simState.uiVisible); toggleStats(simState.showStats); updateTorusGeometryMeshes(); document.querySelectorAll('.control-section').forEach((details, index) => { details.open = (index === 0); }); }
+
+
+        // --- DOM Ready ---
+        document.addEventListener('DOMContentLoaded', function() {
+             const debouncedUpdateTorusGeometry = debounce(updateTorusGeometryMeshes, 300);
+             const numberInputDebounceWait = 350;
+
+            // --- Named Config Slot Functions ---
+             // ... (save/load/delete/populate remain the same as v18.1)
+              const configNameInput = document.getElementById('configNameInput'); const configSelect = document.getElementById('configSelect');
+             function getConfigSlotKey(name) { const sanitizedName = name.replace(/[^\w\s-]/g, '').trim(); return sanitizedName ? namedSlotPrefix + sanitizedName : null; }
+             function populateConfigDropdown() { configSelect.innerHTML = '<option value="">-- Select Saved Config --</option>'; let savedConfigs = []; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith(namedSlotPrefix)) { savedConfigs.push(key.substring(namedSlotPrefix.length)); } } savedConfigs.sort((a, b) => a.localeCompare(b)); savedConfigs.forEach(name => { const option = document.createElement('option'); option.value = name; option.textContent = name; configSelect.appendChild(option); }); }
+             function saveNamedConfig() { handleInteraction(); const name = configNameInput.value.trim(); if (!name) { alert("Please enter a name."); configNameInput.focus(); return; } const key = getConfigSlotKey(name); if (!key) { alert("Invalid name."); return; } try { const stateToSave = {}; for (const id in controlsConfig) { const config = controlsConfig[id]; if (simState.hasOwnProperty(config.stateVar)) { stateToSave[config.stateVar] = simState[config.stateVar]; } } stateToSave.cameraPosition = { ...simState.cameraPosition }; stateToSave.cameraRotation = { ...simState.cameraRotation }; stateToSave.showStats = simState.showStats; stateToSave.baseParticleColor = simState.baseParticleColor; stateToSave.nestedShellColors = [...simState.nestedShellColors]; stateToSave.shellSettings = JSON.parse(JSON.stringify(simState.shellSettings)); localStorage.setItem(key, JSON.stringify(stateToSave)); console.log(`Config saved: ${name}`); alert(`'${name}' saved!`); populateConfigDropdown(); configSelect.value = name; configNameInput.value = ''; } catch (error) { console.error(`Save failed '${name}':`, error); alert(`Error saving '${name}'.`); } }
+             function loadNamedConfig() { handleInteraction(); const name = configSelect.value; if (!name) { alert("Select config."); return; } const key = getConfigSlotKey(name); if (!key) return; const loadedOk = loadStateFromStorage(key, `config '${name}'`); if(loadedOk) { initializeUI(); createParticleSystem(); updateTorusGeometryMeshes(); alert(`'${name}' loaded.`); } }
+             function deleteNamedConfig() { handleInteraction(); const name = configSelect.value; if (!name) { alert("Select config."); return; } const key = getConfigSlotKey(name); if (!key) return; if (confirm(`Delete config '${name}'?`)) { try { localStorage.removeItem(key); console.log(`Deleted: ${name}`); alert(`'${name}' deleted.`); populateConfigDropdown(); } catch (error) { console.error(`Delete failed '${name}':`, error); alert(`Error deleting '${name}'.`); } } }
+
+
+            // --- Auto Save/Load State ---
+             // ... (autoSaveState and loadStateFromStorage remain the same as v18.1)
+             function autoSaveState() { try { const stateToSave = {}; for (const id in controlsConfig) { const config = controlsConfig[id]; if (simState.hasOwnProperty(config.stateVar)) { stateToSave[config.stateVar] = simState[config.stateVar]; } } stateToSave.cameraPosition = { ...simState.cameraPosition }; stateToSave.cameraRotation = { ...simState.cameraRotation }; stateToSave.showStats = simState.showStats; stateToSave.baseParticleColor = simState.baseParticleColor; stateToSave.nestedShellColors = [...simState.nestedShellColors]; stateToSave.shellSettings = JSON.parse(JSON.stringify(simState.shellSettings)); localStorage.setItem(autoSaveKey, JSON.stringify(stateToSave)); } catch (error) { console.error("Auto-save failed:", error); } }
+             const debouncedAutoSave = debounce(autoSaveState, 750);
+             function loadStateFromStorage(storageKey, sourceDescription = "saved state") { const savedState = localStorage.getItem(storageKey); if (savedState) { try { const loadedData = JSON.parse(savedState); console.log(`Loading ${sourceDescription}...`); const defaultStateCopy = JSON.parse(JSON.stringify({ flowIntensity: 0.5, flowTwist: 2.0, flowCouplingFactor: 0.0, angularMomentumEffect: 5.0, approximateAngularMomentum: true, windingTheta: 0, windingPhi: 0, solitonPhasing: 0.0, jitterScale: 0.0, visualizeEigenmode: false, eigenmodeM: 1, eigenmodeN: 2, eigenmodeFlowStrength: 0.0, arrangementMode: 'single', tubeRadius: 2940, torusRadius: 3000, pulseAmplitude: 0.0, pulseFrequency: 0.5, numInnerTori: 0, innerTorusRatio: 0.5, showTorusGeometry: false, userParticleCount: 90000, particleSize: 1.0, energyIntensity: 50.0, particleOpacityVariation: 0.0, opacityFromCamera: 0.0, colorMode: 'manualShell', particleColorVariation: 0.0, enableTrails: true, trailDecay: 0.938, enableBloom: true, isPaused: false, simSpeed: 1.0, uiVisible: true, showStats: false, baseParticleColor: "#639EFF", nestedShellColors: [...defaultNestedShellColors], shellSettings: [JSON.parse(JSON.stringify(defaultShellSetting))], cameraPosition: { ...initialCameraPosition }, cameraRotation: { ...initialCameraRotation }, targetCameraRotation: { ...initialCameraRotation } })); const mergedState = JSON.parse(JSON.stringify(defaultStateCopy)); for (const key in controlsConfig) { const stateVar = controlsConfig[key].stateVar; if (loadedData.hasOwnProperty(stateVar)) { if (typeof defaultStateCopy[stateVar] === 'boolean') { mergedState[stateVar] = !!loadedData[stateVar]; } else if (typeof defaultStateCopy[stateVar] === 'number') { const parsedNum = parseFloat(loadedData[stateVar]); if (!isNaN(parsedNum)) { mergedState[stateVar] = parsedNum; } } else { mergedState[stateVar] = loadedData[stateVar]; } } } if(loadedData.cameraPosition) mergedState.cameraPosition = { ...mergedState.cameraPosition, ...loadedData.cameraPosition }; if(loadedData.cameraRotation) mergedState.cameraRotation = { ...mergedState.cameraRotation, ...loadedData.cameraRotation }; if (loadedData.hasOwnProperty('showStats')) mergedState.showStats = !!loadedData.showStats; if (loadedData.hasOwnProperty('baseParticleColor')) mergedState.baseParticleColor = loadedData.baseParticleColor; if (Array.isArray(loadedData.nestedShellColors)) { mergedState.nestedShellColors = [...loadedData.nestedShellColors]; } const loadedNumTori = mergedState.numInnerTori || 0; const requiredShells = loadedNumTori + 1; mergedState.shellSettings = []; if (Array.isArray(loadedData.shellSettings)) { for (let i = 0; i < requiredShells; i++) { const loadedShell = loadedData.shellSettings[i]; const defaultShell = JSON.parse(JSON.stringify(defaultShellSetting)); if (loadedShell && typeof loadedShell === 'object') { mergedState.shellSettings.push({ useDiscretePlacement: loadedShell.hasOwnProperty('useDiscretePlacement') ? !!loadedShell.useDiscretePlacement : defaultShell.useDiscretePlacement, discreteN: typeof loadedShell.discreteN === 'number' ? loadedShell.discreteN : defaultShell.discreteN, discreteM: typeof loadedShell.discreteM === 'number' ? loadedShell.discreteM : defaultShell.discreteM, discreteSlidersLinked: loadedShell.hasOwnProperty('discreteSlidersLinked') ? !!loadedShell.discreteSlidersLinked : defaultShell.discreteSlidersLinked, particleOpacity: typeof loadedShell.particleOpacity === 'number' ? loadedShell.particleOpacity : defaultShell.particleOpacity, }); } else { mergedState.shellSettings.push(defaultShell); } } } else { for (let i = 0; i < requiredShells; i++) { mergedState.shellSettings.push(JSON.parse(JSON.stringify(defaultShellSetting))); } } while (mergedState.nestedShellColors.length < loadedNumTori) { mergedState.nestedShellColors.push(defaultNestedShellColors[mergedState.nestedShellColors.length % defaultNestedShellColors.length]); } if (mergedState.nestedShellColors.length > loadedNumTori) { mergedState.nestedShellColors = mergedState.nestedShellColors.slice(0, loadedNumTori); } mergedState.targetCameraRotation = { ...mergedState.cameraRotation }; simState = mergedState; console.log(`${sourceDescription} loaded successfully.`); return true; } catch (error) { console.error(`Load failed ${sourceDescription}:`, error); if (storageKey === autoSaveKey) { localStorage.removeItem(storageKey); alert(`Error loading ${sourceDescription}. Cleared auto-save.`); } else { alert(`Error loading ${sourceDescription}. Please check console.`); } return false; } } else { console.log(`No ${sourceDescription} found.`); return false; } }
+
+            // --- Reinitiate Simulation Function ---
+            function reinitiateSimulation() { handleInteraction(); console.log("Reinitiating simulation..."); createParticleSystem(); updateTorusGeometryMeshes(); console.log("Simulation reinitiated."); }
+
+            // --- Initial Load & Setup ---
+            loadStateFromStorage(autoSaveKey, "auto-saved state");
+            populateConfigDropdown();
+            initializeUI(); // Builds dynamic UI
+            createParticleSystem(); // Create initial particles
+            updateTorusGeometryMeshes();
+
+            // --- Global Event Listeners ---
+             // ... (window resize, mouse/touch drag, wheel remain the same)
+            window.addEventListener('resize', () => { handleInteraction(); const w=window.innerWidth,h=window.innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);composer.setSize(w,h); bloomPass.setSize(w, h); }); document.addEventListener('mousedown', (e)=>{ handleInteraction(); if(!e.target.closest('#controls')){isDragging=true;previousMousePosition={x:e.clientX,y:e.clientY};}}); document.addEventListener('mouseup',()=>{ handleInteraction(); isDragging=false; }); document.addEventListener('mousemove', (e)=>{ if(isDragging){ handleInteraction(); const dM={x:e.clientX-previousMousePosition.x,y:e.clientY-previousMousePosition.y}; simState.targetCameraRotation.y+=dM.x*0.005; simState.targetCameraRotation.x+=dM.y*0.005; simState.targetCameraRotation.x = Math.max(-Math.PI / 2 + epsilon, Math.min(Math.PI / 2 - epsilon, simState.targetCameraRotation.x)); previousMousePosition={x:e.clientX,y:e.clientY}; debouncedAutoSave(); } else { handleInteraction(); } }); document.addEventListener('wheel',(e)=>{ handleInteraction(); if (!e.target.closest('#controls')) { const zS = 0.1 * (simState.cameraPosition.z / 1000); const d = -Math.sign(e.deltaY) * zS; simState.cameraPosition.z = Math.max(1000, Math.min(100000, simState.cameraPosition.z - d * 500)); e.preventDefault(); debouncedAutoSave(); }}, {passive:false}); document.addEventListener('touchstart', handleInteraction, { passive: true }); document.addEventListener('touchmove', handleInteraction, { passive: true });
+
+            // --- Control Panel Event Delegation (Globals Only) ---
+             // ... (handleGlobalInputChange and listeners remain the same as v18.1)
+            const controlsDiv = document.getElementById('controls');
+            const handleGlobalInputChange = (e) => { handleInteraction(); const target = e.target; const id = target.id; let config = controlsConfig[id]; let isNumberInput = target.type === 'number' && target.classList.contains('slider-number-input'); let baseId = id; if (isNumberInput) { baseId = id.replace('Number', ''); config = controlsConfig[baseId]; } else if (target.type === 'number' && controlsConfig[id]) { config = controlsConfig[id]; baseId = id; } if (!config || !config.stateVar) { return; } const type = config.type; let value = target.value; let processedValue = value; if (type === 'range' || type === 'number' || isNumberInput) { const rangeElement = document.getElementById(baseId); const props = getNumberInputProps(rangeElement); let numVal = parseFloat(value); if (!isNaN(numVal)) { if (config.stateVar === 'userParticleCount' && (isNumberInput || target.id === 'particleCountNumber')) { numVal *= 1000; } numVal = Math.min(props.max ?? Infinity, Math.max(props.min ?? -Infinity, numVal)); if (props.step && props.step > 0) { const invStep = 1.0 / props.step; numVal = Math.round(numVal * invStep) / invStep; } processedValue = numVal; } else { processedValue = simState[config.stateVar]; } } else if (type === 'checkbox') { processedValue = target.checked; } setStateValue(config.stateVar, processedValue, config.type); updateControlValue(baseId, simState[config.stateVar], config); if (config.effect) { config.effect(simState[config.stateVar]); } if (config.changeEffect) { const effectDebounceTime = (isNumberInput || type==='range') ? numberInputDebounceWait : 0; debounce(() => { config.changeEffect(simState[config.stateVar], debounce); debouncedAutoSave(); }, effectDebounceTime)(); } else { debouncedAutoSave(); } };
+            controlsDiv.addEventListener('input', handleGlobalInputChange); controlsDiv.addEventListener('change', (e) => { handleInteraction(); const target = e.target; const id = target.id; if (target.type === 'number') { handleGlobalInputChange(e); } else if (target.type === 'checkbox' || target.tagName === 'SELECT') { const config = controlsConfig[id]; if (!config || !config.stateVar) return; const value = (target.type === 'checkbox') ? target.checked : target.value; setStateValue(config.stateVar, value, config.type); updateControlValue(id, simState[config.stateVar], config); if (config.effect) { config.effect(simState[config.stateVar]); } if (config.changeEffect) { config.changeEffect(simState[config.stateVar], debounce); } debouncedAutoSave(); } });
+
+            // --- Button Event Listeners ---
+             // ... (Button listeners remain the same as v18.1, except link icon removed)
+            document.getElementById('toggleUIButton').addEventListener('click', ()=>{ handleInteraction(); toggleUI(!simState.uiVisible); debouncedAutoSave(); }); const showUIButton = document.getElementById('showUIButton'); showUIButton?.addEventListener('click', ()=>{ handleInteraction(); toggleUI(true); debouncedAutoSave(); }); showUIButton?.addEventListener('mouseenter', () => { clearTimeout(fadeTimeoutId); showUIButton.classList.remove('faded-out'); }); showUIButton?.addEventListener('mouseleave', () => { if (!simState.uiVisible) { clearTimeout(fadeTimeoutId); fadeTimeoutId = setTimeout(() => { showUIButton.classList.add('faded-out'); }, 3000); } }); document.getElementById('playPauseButton').addEventListener('click', () => { handleInteraction(); simState.isPaused = !simState.isPaused; document.getElementById('playPauseButton').textContent = simState.isPaused ? 'Play' : 'Pause'; debouncedAutoSave(); }); document.getElementById('reinitiateButton').addEventListener('click', reinitiateSimulation); document.getElementById('resetPresetButton').addEventListener('click', () => { handleInteraction(); if (confirm("Reset all settings to default AND clear auto-save and ALL named configurations?")) { localStorage.removeItem(autoSaveKey); for (let i = localStorage.length - 1; i >= 0; i--) { const key = localStorage.key(i); if (key.startsWith(namedSlotPrefix)) { localStorage.removeItem(key); } } window.location.reload(); } }); document.getElementById('saveConfigButton').addEventListener('click', saveNamedConfig); document.getElementById('loadConfigButton').addEventListener('click', loadNamedConfig); document.getElementById('deleteConfigButton').addEventListener('click', deleteNamedConfig); document.getElementById('toggleStatsButton')?.addEventListener('click', () => { handleInteraction(); toggleStats(!simState.showStats); debouncedAutoSave(); }); const isoAngleX = Math.atan(1/Math.sqrt(2)); const isoAngleY = Math.PI / 4; const viewButtons = { 'snapTopViewButton': { x: Math.PI / 2 - epsilon, y: 0 }, 'snapBottomViewButton': { x: -Math.PI / 2 + epsilon, y: 0 }, 'snapFrontViewButton': { x: 0, y: 0 }, 'snapBackViewButton': { x: 0, y: Math.PI }, 'snapLeftViewButton': { x: 0, y: -Math.PI / 2 }, 'snapRightViewButton': { x: 0, y: Math.PI / 2 }, 'snapIsoNEButton': { x: isoAngleX, y: -isoAngleY }, 'snapIsoNWButton': { x: isoAngleX, y: isoAngleY }, 'snapIsoSEButton': { x: isoAngleX, y: -isoAngleY + Math.PI }, 'snapIsoSWButton': { x: isoAngleX, y: isoAngleY + Math.PI }, }; for (const btnId in viewButtons) { document.getElementById(btnId)?.addEventListener('click', () => { handleInteraction(); simState.targetCameraRotation = { ...viewButtons[btnId] }; debouncedAutoSave(); }); }
+
+            // --- Hotkeys Setup ---
+             // ... (Hotkey listeners remain the same)
+            const hotkeysPanel = document.getElementById('hotkeysPanel'); document.getElementById('showHotkeysButton')?.addEventListener('click', () => { handleInteraction(); hotkeysPanel.style.display = 'block'; }); document.getElementById('closeHotkeysButton')?.addEventListener('click', () => { handleInteraction(); hotkeysPanel.style.display = 'none'; }); hotkeysPanel?.addEventListener('keydown', (e) => { handleInteraction(); if (e.key === 'Escape') { hotkeysPanel.style.display = 'none'; } }); document.addEventListener('keydown', (e) => { handleInteraction(); const targetTagName = e.target.tagName; const isInputFocused = (targetTagName === 'INPUT' && e.target.type !== 'color') || targetTagName === 'SELECT' || targetTagName === 'TEXTAREA'; const isHotkeysPanelOpen = hotkeysPanel?.style.display === 'block'; if (isHotkeysPanelOpen && e.key !== 'Escape') return; if (isInputFocused && e.key !== 'Escape') return; let handled = true; let buttonToClick = null; switch (e.key) { case ' ': buttonToClick = 'playPauseButton'; break; case 'h': case 'H': buttonToClick = 'toggleUIButton'; break; case 'R': if (e.shiftKey) { buttonToClick = 'reinitiateButton'; } else { handled = false; } break; case 'Delete': if (e.shiftKey) { buttonToClick = 'resetPresetButton'; } else { handled = false; } break; case 't': case 'T': buttonToClick = 'snapTopViewButton'; break; case 'f': case 'F': buttonToClick = 'snapFrontViewButton'; break; case 'l': case 'L': buttonToClick = 'snapLeftViewButton'; break; case 'i': case 'I': buttonToClick = 'snapIsoNEButton'; break; case 'Escape': if (isHotkeysPanelOpen) { hotkeysPanel.style.display = 'none'; } else if(isInputFocused) { e.target.blur(); } else { handled = false; } break; default: handled = false; break; } if (buttonToClick) { const buttonElement = document.getElementById(buttonToClick); if (buttonElement) { buttonElement.click(); buttonElement.style.transform = 'scale(0.95)'; setTimeout(() => { buttonElement.style.transform = 'scale(1)'; }, 150); } } if (handled) { e.preventDefault(); } }); controlsDiv.querySelectorAll('input[type="range"], input[type="number"], input[type="color"]').forEach(s=>{s.addEventListener('mousedown',(e)=>{ e.stopPropagation();});s.addEventListener('touchstart',(e)=>{ e.stopPropagation();},{passive:true});});
+
+        }); // End DOMContentLoaded wrapper
+
+        // --- Start Animation ---
+        animate();
+
+    </script>
+</body>
+</html>
