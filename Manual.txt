@@ -1,0 +1,158 @@
+User Manual: EVO Toroidal Flow - Unified Physics (v17.3)
+
+Date: April 3, 2025
+
+1. Introduction
+
+Welcome to the EVO Toroidal Flow Simulator! This application visualizes particle flow within one or more toroidal (donut-shaped) structures. It allows you to explore concepts related to:
+
+    Fluid Dynamics: Simulating basic toroidal and poloidal flow patterns.
+    Physics Visualization: Observing the effects of simulated angular momentum, eigenmodes, and particle interactions (like soliton phasing).
+    Sacred Geometry: Arranging multiple toroids into patterns like the Flower of Life, Fruit of Life, Platonic Solids, and more.
+    Particle Systems: Experimenting with large numbers of particles, their appearance, coloring, and post-processing effects like motion trails and bloom.
+
+This manual will guide you through the interface and controls to help you explore the simulation.
+
+2. Getting Started: Basic Interaction
+
+    Camera Control:
+        Rotate: Click and drag the background with your mouse.
+        Zoom: Use the mouse wheel to zoom in and out.
+    Play/Pause: Use the Pause / Play button in the control panel or press the Spacebar to toggle the simulation's animation.
+    Show/Hide UI: Click the Hide UI button in the control panel or press H to hide the controls for an unobstructed view. Click the Show UI button that appears briefly in the bottom-left (or press H again) to bring the controls back.
+
+3. The Control Panel (#controls)
+
+The main controls are located in a panel at the bottom-left. It's organized into collapsible sections using <details> tags. Click the summary title (e.g., "Flow Dynamics") to expand or collapse a section.
+
+3.1. Flow Dynamics
+
+This section controls the fundamental movement of the particles within the torus/tori.
+
+    Intensity: (Slider) Overall speed/energy factor for the particle flow. Higher values mean faster movement.
+    Twist: (Slider) Ratio of Toroidal (around the main ring) to Poloidal (around the tube) speed.
+        < 1: More speed around the tube.
+        > 1: More speed around the main ring.
+    Flow Coupling: (Slider) Couples rotational (toroidal) speed with inward/outward (poloidal) speed.
+        > 0: Faster rotation increases inward speed.
+        < 0: Faster rotation decreases inward speed.
+    Ang. Momentum Effect: (Slider) [Default: 5.0] Simulates an effect where particles speed up as they get closer to the central axis (r=0). Note: This effect is ignored by the physics simulation when "Approx. Angular Momentum" is checked.
+    Approx. Angular Momentum: (Checkbox) [Default: Enabled] Overrides the "Ang. Momentum Effect" slider. Enables a simplified conservation of angular momentum approximation (v ~ 1/r), where toroidal speed increases closer to the center.
+    Winding Î¸ (Poloidal): (Slider) Adds a constant drift velocity in the poloidal direction (around the tube).
+    Winding Ï† (Toroidal): (Slider) Adds a constant drift velocity in the toroidal direction (around the main ring).
+    Soliton Phasing: (Slider) Strength of a force pulling particles back towards their ideal flow path (if placement is random) or their original grid point (if placement is discrete). Higher values create more coherent, less chaotic flow patterns.
+    Jitter Scale: (Slider) Adds a small random positional offset to each particle every frame. Primarily affects the physics calculations and can introduce noise or diffusion.
+    Visualize Eigenmode (m, n): (Checkbox) Enables visualization of theoretical torus eigenmodes by modulating the flow speed.
+        Mode m (Poloidal): (Number Input) Sets the poloidal mode number (number of waves around the tube).
+        Mode n (Toroidal): (Number Input) Sets the toroidal mode number (number of waves around the main ring).
+        Eigenmode Mod. Strength: (Slider) Controls how strongly the eigenmode affects the flow speed. Positive values speed up wave crests, negative values speed up troughs. A value of 0 disables the effect. (Note: Requires the main Checkbox to be enabled).
+
+3.2. Geometry & Structure
+
+Controls the shape, size, and arrangement of the torus/tori.
+
+    Arrangement: (Dropdown) Selects the geometric arrangement for multiple toroids. Includes 'Single', 'Vesica Piscis', 'Flower of Life (2D)', various Platonic solids, etc. Changing this rebuilds the simulation.
+    Tube Radius (r): (Slider) Controls the minor radius (thickness of the tube) of the torus/tori. Changing this rebuilds the simulation.
+    Torus Radius (R) / Scale: (Slider) Controls the major radius (distance from the center to the middle of the tube) for a single torus, or the base scale factor for multi-torus arrangements. Changing this rebuilds the simulation.
+    Pulse Amplitude: (Slider) Amplitude of an oscillation applied to both the major and minor radii, creating a pulsing effect.
+    Pulse Frequency: (Slider) Frequency of the radius oscillation (requires Pulse Amplitude > 0).
+    Nested Shells: (Slider) Number of additional, smaller toroid shells nested inside the main one(s). Set to 0 for no nesting. Changing this rebuilds the simulation.
+    Shell Size Ratio: (Slider) Size ratio between consecutive nested shells (e.g., 0.5 means each inner shell is half the radius of the one outside it). Requires Nested Shells > 0. Changing this rebuilds the simulation.
+    Use Discrete Placement (N x M): (Checkbox) [Default: Enabled] Toggles particle placement mode.
+        Checked: Places particles on a fixed N x M grid around the torus surface. Overrides the 'Particle Count' slider (count becomes N * M).
+        Unchecked: Places particles randomly within the torus volume based on the 'Particle Count' slider.
+    Discrete Placement Controls (Visible when checkbox is checked):
+        Link N/M: (Icon Button ðŸ”—/ðŸ”’) Links the N and M sliders so they change together. Click to toggle linking.
+        N (Poloidal Segs): (Slider) Number of grid segments around the tube.
+        M (Toroidal Segs): (Slider) Number of grid segments around the main ring.
+        Total Grid Points: (Display) Shows the calculated total N * M points.
+
+3.3. Particles & Appearance
+
+Controls the number and visual style of the particles.
+
+    Particle Count: (Slider) Sets the target total number of particles when not using Discrete Placement. The actual number may vary slightly in multi-torus arrangements. Disabled in Discrete Placement mode. Changing this rebuilds the simulation.
+
+    Particle Size: (Slider) Base size of the individual particles.
+
+    Energy Intensity: (Slider) Affects particle glow and brightness (visual effect only).
+
+    Base Opacity: (Slider) Sets the base transparency of particles.
+
+    Opacity Variation: (Slider) Adds randomness to individual particle opacity (currently a simple visual effect on the overall material opacity, not per-particle).
+
+    Coloring:
+        Color Mode: (Dropdown) Selects how particle colors are determined.
+            Manual RGB: Uses the RGB sliders below (or shell colors if Nested Shells > 0).
+            Velocity: Color based on particle speed (e.g., blue=slow, red=fast).
+            Direction Change: Color based on how much the particle's direction changed from the last frame.
+            Poloidal Angle: Color based on angle around the tube (theta).
+            Toroidal Angle: Color based on angle around the main ring (phi).
+            Radial Pos (Tube): Color based on distance from the center of the tube cross-section.
+            Radial Pos (XY): Color based on distance from the main Z-axis in the XY plane.
+            Dist from R: Color based on distance from the major radius R.
+            Angles (H=Tor, L=Pol): Color hue based on toroidal angle, lightness based on poloidal angle.
+            Eigenmode Phase: Color based on the particle's phase within the visualized eigenmode (requires Eigenmode visualization to be active).
+            XYZ Position: Color based directly on the particle's X, Y, Z coordinates mapped to R, G, B.
+        Manual Color Controls (Visible when Color Mode is 'Manual RGB'):
+            Red / Green / Blue: (Sliders) Set the base RGB color components.
+            Color Variation: (Slider) Applies random variation to the base manual color (or shell color if nesting is enabled).
+
+    Post-Processing Effects: These effects can significantly impact performance, especially with high particle counts.
+        Enable Trails: (Checkbox) Enables a motion blur/trail effect.
+        Trail Decay: (Slider) Controls how quickly trails fade (lower value = longer trails). Only active if Trails are enabled.
+        Enable Bloom: (Checkbox) Enables a glow effect around bright particles.
+
+3.4. Configuration Slots
+
+Allows you to save and load your favorite simulation settings. Saved configurations are stored in your browser's Local Storage.
+
+    Save Name: (Text Input) Enter a descriptive name for the current settings.
+    Save As: (Button) Saves all current settings (flow, geometry, particles, camera position/rotation, etc.) using the entered name. Overwrites existing slots with the same name without warning.
+    Load/Delete: (Dropdown) Select a previously saved configuration name.
+    Load: (Button) Loads the settings from the selected configuration slot. Rebuilds the simulation.
+    Delete: (Button) Deletes the selected configuration slot from storage after confirmation.
+
+3.5. Main Buttons & Controls (Bottom Area)
+
+These buttons provide global actions for the simulation.
+
+    Hide UI / Show UI: (Button) Toggles the visibility of the main control panel. Hotkey: H.
+    Hotkeys: (Button) Displays a panel showing available keyboard shortcuts.
+    Support: (Button) Opens a link in a new tab to support the developer via Buy Me a Coffee.
+    Animation Controls:
+        Pause / Play: (Button) Toggles the simulation animation. Hotkey: Spacebar.
+        Speed: (Slider & Display) Adjusts the simulation speed multiplier.
+    Preset Controls:
+        Restart Sim: (Button) Resets the camera to the default view and reinitializes particles using the current settings. Hotkey: Shift + R.
+        Reset all: (Button) WARNING: Resets all settings to their original defaults and clears the auto-save state and ALL named configuration slots from your browser's storage. Requires confirmation. Hotkey: Shift + Delete.
+    View Buttons: (Multiple Buttons) Snap the camera instantly to standard orthographic (Top, Bottom, Front, Back, Left, Right) or isometric views (Iso NE, NW, SE, SW). Hotkeys available for Top (T), Front (F), Left (L), Iso NE (I).
+
+4. Hotkeys
+
+    Spacebar: Play / Pause Simulation
+    H: Show / Hide UI Panel
+    Shift + R: Restart Simulation (Reset Camera & Particles with current settings)
+    Shift + Delete: Reset All Settings (Clears Saved States, requires confirmation)
+    T: Snap View to Top
+    F: Snap View to Front
+    L: Snap View to Left
+    I: Snap View to Isometric NE
+    Escape: Close the Hotkeys Panel if it's open.
+
+(Note: Hotkeys generally do not work when a text input field is focused).
+
+5. Tips for Exploration
+
+    Start with Arrangement: Single and Use Discrete Placement: Checked to understand basic flow. Adjust Intensity and Twist.
+    Enable Color Mode: Velocity or Poloidal Angle / Toroidal Angle for dynamic coloring.
+    Try adding Nested Shells with Color Mode: Manual to see the different colored layers. Note how particleColorVariation affects shell colors.
+    Explore different Arrangement modes like 'Flower of Life (2D)' or 'Star Tetrahedron'. You may need to zoom out (mouse wheel).
+    Experiment with Soliton Phasing - a small value can make chaotic flows much more structured.
+    Turn on Visualize Eigenmode, select m=1, n=2 (or other values), and adjust Eigenmode Mod. Strength (positive or negative) to see wave patterns influence the flow. Try Color Mode: Eigenmode Phase.
+    Use the Configuration Slots to save settings you like!
+    Be mindful that high Particle Count, Enable Trails, and Enable Bloom can reduce performance on less powerful devices.
+
+6. Support the Developer
+
+If you enjoy this application, please consider supporting the developer by clicking the Support button at the bottom of the control panel.
