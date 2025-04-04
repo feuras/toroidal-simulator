@@ -2,11 +2,17 @@
 
 Live Demo Here - https://toroidal.midland.org.uk/
 
+![image](https://github.com/user-attachments/assets/2b1612ea-19a9-4ef5-8c38-e769299c0a04)
+
 ---
 
 ## Description
 
-This web-based provides an interactive visualization of particle flow within one or more toroidal moments. It allows users to manipulate parameters related to:
+This web-based app provides an interactive visualization of particle flow within one or more toroidal moments. The aim of the app is to allow the users to explore, building an intuitive understand of related geometry. Many mathematical and scientific principles are included, though not strictly named to make the app accessible for everyone. The app aims to be lightweight and run on many devices, so many features related to complex math and quantum physics are not fully calculated (yet!).
+
+**PC devices only, mobile and touchscreen support to follow later.
+
+It allows users to manipulate parameters related to:
 
 * **Flow Dynamics:** Control intensity, twist (toroidal vs. poloidal flow), angular momentum effects, soliton phasing, and even visualize theoretical eigenmodes.
 * **Geometry:** Define torus dimensions (major/minor radius), create nested shells, and arrange multiple toroids into sacred geometry patterns (Flower of Life, Platonic Solids, etc.) or standard arrangements.
