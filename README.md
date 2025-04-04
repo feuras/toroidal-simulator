@@ -1,4 +1,4 @@
-# Toroidal Simulator - Unified Physics (v17.3)
+# Toroidal Simulator - Public ALPHA - ( Interal v17.3)
 
 Live Demo Here - https://toroidal.midland.org.uk/
 
