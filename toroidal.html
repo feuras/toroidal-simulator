@@ -1,0 +1,1209 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVO Toroidal Flow - Unified Physics (v17.3 - Named Configs & Hotkeys)</title>
+    <style>
+        /* CSS (Optimized) - Final width, disabled style */
+        :root {
+            --control-bg: rgba(0, 0, 0, 0.75); --input-bg: #333; --border-color: rgba(100, 100, 100, 0.5);
+            --text-color: white; --label-color: #ccc; --header-color: #aaa;
+            --button-bg: #4a5568; --button-hover-bg: #2d3748; --view-button-bg: #2d5e70;
+            --view-button-hover-bg: #1d3c47;
+            /* Preset/Restart Button Colors */
+            --preset-restart-bg: #023e8a; --preset-restart-hover-bg: #012f6b;
+            --preset-reset-bg: #001845; --preset-reset-hover-bg: #000f2b;
+            /* Config Slot Button Colors */
+            --config-save-bg: #1a5f7a; --config-save-hover-bg: #154c62;
+            --config-load-bg: #1f7a8c; --config-load-hover-bg: #196371;
+            --config-delete-bg: #8c1f1f; --config-delete-hover-bg: #6b1717;
+
+            --scrollbar-track: #1a1a1a; --scrollbar-thumb: #444; --scrollbar-thumb-hover: #555;
+            --icon-color: #aaa; --icon-active-color: #2a9fd6;
+            --overlay-bg: rgba(10, 10, 10, 0.9);
+        }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: Arial, sans-serif; color: var(--text-color); }
+        canvas { display: block; }
+        #controls {
+            position: absolute; bottom: 10px; left: 10px; background: var(--control-bg); padding: 5px 8px;
+            border-radius: 5px; z-index: 100; max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease; font-size: 70%; max-width: 386px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        }
+        #controls::-webkit-scrollbar { width: 8px; }
+        #controls::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 4px;}
+        #controls::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; border: 2px solid var(--scrollbar-track); }
+        #controls::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
+
+        .control-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); }
+        .control-section:first-child { border-top: none; }
+        .control-section summary { font-size: 100%; color: var(--header-color); font-weight: bold; cursor: pointer; padding: 3px 0; list-style: none; }
+        .control-section summary::-webkit-details-marker { display: none; }
+        .control-section summary::before { content: '▶ '; font-size: 80%; }
+        .control-section[open] summary::before { content: '▼ '; }
+        .control-section[open] > *:not(summary) { margin-left: 10px; padding-left: 5px; border-left: 1px dotted #666; }
+        .sub-section { margin: 8px 0; padding-top: 8px; border-top: 1px dashed rgba(100, 100, 100, 0.3);}
+        .sub-section:first-of-type { border-top: none; padding-top: 0; margin-top: 5px;}
+        .sub-section h5 { margin: 3px 0 6px 0; font-size: 95%; color: #999; font-weight: normal; border-bottom: 1px dotted rgba(100,100,100,0.2); padding-bottom: 3px; }
+        .slider-container, .select-container, .checkbox-container, .input-container { margin: 5px 0; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+        .slider-container label, .select-container label, .checkbox-container label, .input-container label { flex: 0 0 40%; margin-right: 5px; white-space: nowrap; font-size: 95%; overflow: hidden; text-overflow: ellipsis; color: var(--label-color); cursor: help; }
+        .slider-container input[type="range"] { flex: 1; margin: 0 3px; }
+        .input-container input[type="number"], .input-container input[type="text"] { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid #555; border-radius: 3px; font-size: 90%; padding: 1px 3px; width: 50px; text-align: right;}
+        .input-container input[type="text"] { text-align: left; width: auto; } /* Specific for text input */
+        .select-container select { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid #555; border-radius: 3px; font-size: 90%; padding: 2px; }
+        .checkbox-container { justify-content: flex-start; }
+        .checkbox-container input[type="checkbox"] { margin-right: 8px; flex-shrink: 0;}
+        .checkbox-container label { flex: 1; white-space: normal; font-weight: normal; }
+        .slider-container span { min-width: 45px; text-align: right; margin-left: 5px; font-size: 95%; }
+        .slider-container input:disabled, .checkbox-container input:disabled, .input-container input:disabled, .select-container select:disabled { opacity: 0.5; cursor: not-allowed; }
+        .slider-container input:disabled + span { opacity: 0.5; }
+        label.disabled { opacity: 0.5; cursor: not-allowed !important; }
+        .checkbox-container input:disabled + label { opacity: 0.5; cursor: not-allowed !important; }
+
+        .button-container { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); text-align: center; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 5px; }
+        .button-container > button, .button-container > select, .support-button {
+             background-color: var(--button-bg);
+             border: none;
+             color: var(--text-color);
+             padding: 4px 8px;
+             border-radius: 4px;
+             cursor: pointer;
+             transition: background-color 0.2s;
+             font-size: 85%;
+             flex: 1 1 auto;
+             min-width: 60px;
+             margin-bottom: 3px;
+             text-align: center; /* Ensure text is centered */
+             text-decoration: none; /* Remove underline for link */
+             display: inline-block; /* Ensure padding and layout work correctly for <a> */
+             box-sizing: border-box; /* Include padding in width/height */
+        }
+        .button-container > button:hover, .support-button:hover {
+             background-color: var(--button-hover-bg);
+        }
+        .button-container > select { padding: 4px 2px; flex-grow: 0; }
+
+        #showUIButton { position: absolute; bottom: 10px; left: 10px; background-color: rgba(0, 0, 0, 0.5); border: none; color: var(--text-color); padding: 4px 10px; border-radius: 4px; cursor: pointer; z-index: 90; transition: opacity 0.5s ease; /* Fade transition */ opacity: 0; pointer-events: none; font-size: 85%; }
+        #showUIButton.visible { opacity: 1; pointer-events: auto; }
+        #showUIButton.faded-out { opacity: 0.1 !important; /* Low opacity, still allows hover */ }
+
+        #manual-color-controls, #discrete-placement-controls, #eigenmode-controls { display: none; }
+        #manual-color-controls.visible, #discrete-placement-controls.visible, #eigenmode-controls.visible { display: flex; flex-direction: column; }
+        .hidden { display: none !important; }
+        #discreteTotalPoints { font-weight: bold; color: #eee; }
+        .discrete-points-display p { margin: 5px 0 0 0; }
+        .view-buttons-container { display: flex; flex-wrap: wrap; justify-content: space-around; flex-basis: 100%; margin-top: 5px; gap: 5px; }
+        .view-buttons-container button { flex: 1 1 auto; background-color: var(--view-button-bg); min-width: 45px; padding: 4px 6px; font-size: 80%; }
+        .view-buttons-container button:hover { background-color: var(--view-button-hover-bg); }
+        .animation-controls { display: flex; justify-content: space-around; flex-basis: 100%; margin-top: 5px; gap: 5px; align-items: center; }
+        .animation-controls button { min-width: 50px; }
+        .animation-controls label { font-size: 90%; white-space: nowrap; color: var(--label-color); }
+        .animation-controls input[type="range"] { flex-grow: 1; margin: 0 5px;}
+        .preset-controls { display: flex; justify-content: space-around; flex-basis: 100%; margin-top: 5px; gap: 5px; }
+        .preset-controls button { flex: 1; color: white; border-radius: 10px; }
+        #restartSimButton { background-color: var(--preset-restart-bg); }
+        #restartSimButton:hover { background-color: var(--preset-restart-hover-bg); }
+        #resetPresetButton { background-color: var(--preset-reset-bg); }
+        #resetPresetButton:hover { background-color: var(--preset-reset-hover-bg); }
+
+        /* Discrete Slider Link Icon */
+        .discrete-link-wrapper { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 2px; padding-left: 10%; }
+        .slider-link-icon { cursor: pointer; font-size: 120%; color: var(--icon-color); transition: color 0.2s; user-select: none; margin-right: 5px; }
+        .slider-link-icon:hover { color: white; }
+        .slider-link-icon.active { color: var(--icon-active-color); }
+
+        /* Config Slot Styles */
+        .config-slot-controls { display: flex; flex-direction: column; gap: 5px; }
+        .config-slot-row { display: flex; gap: 5px; align-items: center; }
+        .config-slot-row input[type="text"] { flex-grow: 1; min-width: 100px;} /* Allow text input to grow */
+        .config-slot-row select { flex-grow: 1; }
+        .config-slot-row button { flex-shrink: 0; padding: 3px 6px; font-size: 80%; min-width: 50px;}
+        #saveConfigButton { background-color: var(--config-save-bg); }
+        #saveConfigButton:hover { background-color: var(--config-save-hover-bg); }
+        #loadConfigButton { background-color: var(--config-load-bg); }
+        #loadConfigButton:hover { background-color: var(--config-load-hover-bg); }
+        #deleteConfigButton { background-color: var(--config-delete-bg); }
+        #deleteConfigButton:hover { background-color: var(--config-delete-hover-bg); }
+
+        /* Hotkeys Panel */
+        #hotkeysPanel {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--overlay-bg);
+            color: var(--text-color);
+            padding: 20px 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            z-index: 1001; /* Above controls */
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        #hotkeysPanel h4 { margin-top: 0; color: var(--header-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        #hotkeysPanel dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 15px; font-size: 95%; }
+        #hotkeysPanel dt { font-weight: bold; color: var(--label-color); }
+        #hotkeysPanel dd { margin: 0; }
+        #closeHotkeysButton {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--label-color);
+            font-size: 150%;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        #closeHotkeysButton:hover { color: white; }
+
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <details class="control-section" open>
+            <summary>Flow Dynamics</summary>
+              <div class="slider-container"> <label for="flowIntensity" title="Overall speed/energy of the flow">Intensity:</label> <input type="range" id="flowIntensity" min="0" max="1" step="0.01" value="0.5"> <span id="flowIntensityValue">0.50</span> </div>
+              <div class="slider-container"> <label for="flowTwist" title="Ratio of Toroidal/Poloidal speed (>1 means more Toroidal)">Twist:</label> <input type="range" id="flowTwist" min="0.1" max="10" step="0.1" value="2.0"> <span id="flowTwistValue">2.0</span> </div>
+              <div class="slider-container"> <label for="flowCouplingFactor" title="Couples inward and rotational speeds (e.g., >0 makes faster rotation increase inward speed)">Flow Coupling:</label> <input type="range" id="flowCouplingFactor" min="-0.5" max="0.5" step="0.01" value="0.0"> <span id="flowCouplingFactorValue">0.00</span> </div>
+              <div class="slider-container"> <label for="angularMomentumEffect" title="Original: Increases speed closer to center. Disabled if 'Approx Ang Mom' is checked.">Ang. Momentum Effect:</label> <input type="range" id="angularMomentumEffect" min="0" max="5" step="0.05" value="5.0"> <span id="angularMomentumEffectValue">5.00</span> </div>
+              <div class="checkbox-container"> <input type="checkbox" id="approximateAngularMomentum" checked> <label for="approximateAngularMomentum" title="Approximate v ~ 1/r for toroidal speed (overrides Ang. Momentum Effect)">Approx. Angular Momentum</label> </div>
+              <div class="slider-container"> <label for="windingTheta" title="Constant poloidal drift">Winding θ (Poloidal):</label> <input type="range" id="windingTheta" min="-5" max="5" step="1" value="0"> <span id="windingThetaValue">0</span> </div>
+              <div class="slider-container"> <label for="windingPhi" title="Constant toroidal drift">Winding φ (Toroidal):</label> <input type="range" id="windingPhi" min="-5" max="5" step="1" value="0"> <span id="windingPhiValue">0</span> </div>
+              <div class="slider-container"> <label for="solitonPhasing" title="Force pulling particles back towards ideal flow path (if random) or original grid point (if discrete)">Soliton Phasing:</label> <input type="range" id="solitonPhasing" min="0.0" max="0.1" step="0.0001" value="0"> <span id="solitonPhasingValue">0.0000</span> </div>
+              <div class="slider-container"> <label for="jitterScale" title="Random positional jitter added each frame (Affects physics)">Jitter Scale:</label> <input type="range" id="jitterScale" min="0" max="50" step="0.1" value="0.0"> <span id="jitterScaleValue">0.0000</span> </div>
+
+              <div class="sub-section">
+                  <h5>Eigenmode Visualization</h5>
+                  <div class="checkbox-container"> <input type="checkbox" id="visualizeEigenmode"> <label for="visualizeEigenmode" title="Modulate flow based on theoretical eigenmode (m, n)">Visualize Eigenmode (m, n)</label> </div>
+                  <div id="eigenmode-controls" class="eigenmode-controls">
+                      <div class="input-container"> <label for="eigenmodeM" title="Poloidal mode number">Mode m (Poloidal):</label> <input type="number" id="eigenmodeM" step="1" value="1"> </div>
+                      <div class="input-container"> <label for="eigenmodeN" title="Toroidal mode number">Mode n (Toroidal):</label> <input type="number" id="eigenmodeN" step="1" value="2"> </div>
+                      <div class="slider-container"> <label for="eigenmodeFlowStrength" title="Strength of the eigenmode flow modulation (+ speeds up crests, - speeds up troughs)">Eigenmode Mod. Strength:</label> <input type="range" id="eigenmodeFlowStrength" min="-0.5" max="0.5" step="0.01" value="0"> <span id="eigenmodeFlowStrengthValue">0.00</span> </div>
+                  </div>
+              </div>
+              </details>
+
+        <details class="control-section">
+            <summary>Geometry & Structure</summary>
+              <div class="select-container"> <label for="arrangementMode" title="Arrangement of toroids">Arrangement:</label>
+                  <select id="arrangementMode">
+                      <option value="single" selected>Single</option>
+                      <option value="vesicaPiscis">Vesica Piscis (2)</option>
+                      <option value="flowerOfLife2D">Flower of Life (2D - 19)</option>
+                      <option value="fruitOfLife">Fruit of Life (2D - 13)</option>
+                      <option value="treeOfLife">Tree of Life (10)</option>
+                      <option value="tetrahedron">Tetrahedron (4)</option>
+                      <option value="starTetrahedron">Star Tetrahedron (8)</option>
+                      <option value="cube">Cube (8)</option>
+                      <option value="octahedron">Octahedron (6)</option>
+                      <option value="icosahedron">Icosahedron (12)</option>
+                      <option value="dodecahedron">Dodecahedron (20)</option>
+                      </select>
+              </div>
+              <div class="slider-container"> <label for="tubeRadius" title="Minor radius of the torus tube">Tube Radius (r):</label> <input type="range" id="tubeRadius" min="-10000" max="10000" step="10" value="2940"> <span id="tubeRadiusValue">2940.00</span> </div>
+              <div class="slider-container"> <label for="torusRadius" title="Major radius of the torus / Base scale for arrangements">Torus Radius (R) / Scale:</label> <input type="range" id="torusRadius" min="-10000" max="10000" step="10" value="3000"> <span id="torusRadiusValue">3000.00</span> </div>
+              <div class="slider-container"> <label for="pulseAmplitude" title="Amplitude of torus radius oscillation">Pulse Amplitude:</label> <input type="range" id="pulseAmplitude" min="0" max="2000" step="10" value="0"> <span id="pulseAmplitudeValue">0.00</span> </div>
+              <div class="slider-container"> <label for="pulseFrequency" title="Frequency of torus radius oscillation">Pulse Frequency:</label> <input type="range" id="pulseFrequency" min="0" max="2" step="0.01" value="0.5"> <span id="pulseFrequencyValue">0.50</span> </div>
+              <div class="sub-section">
+                  <h5>Nested Toroids</h5>
+                  <div class="slider-container"> <label for="numInnerTori" title="Number of nested shells inside the main one(s)">Nested Shells:</label> <input type="range" id="numInnerTori" min="0" max="6" step="1" value="0"> <span id="numInnerToriValue">0</span> </div>
+                  <div class="slider-container"> <label for="innerTorusRatio" title="Size ratio between consecutive nested shells">Shell Size Ratio:</label> <input type="range" id="innerTorusRatio" min="0.1" max="0.95" step="0.01" value="0.5"> <span id="innerTorusRatioValue">0.50</span> </div>
+              </div>
+
+              <div class="sub-section">
+                  <h5>Particle Placement</h5>
+                  <div class="checkbox-container"> <input type="checkbox" id="useDiscretePlacement" checked> <label for="useDiscretePlacement" title="Place particles on a discrete N x M grid instead of randomly (Overrides Particle Count)">Use Discrete Placement (N x M)</label> </div>
+                  <div id="discrete-placement-controls" class="discrete-placement-controls">
+                      <div class="discrete-link-wrapper">
+                         <span id="discreteLinkIcon" class="slider-link-icon" title="Link/Unlink N and M sliders">🔗</span> Link N/M
+                      </div>
+                      <div class="slider-container">
+                          <label for="discreteN" title="Number of poloidal segments">N (Poloidal Segs):</label>
+                          <input type="range" id="discreteN" min="4" max="1280" step="1" value="300">
+                          <span id="discreteNValue">300</span>
+                      </div>
+                      <div class="slider-container">
+                          <label for="discreteM" title="Number of toroidal segments">M (Toroidal Segs):</label>
+                          <input type="range" id="discreteM" min="4" max="1280" step="1" value="300">
+                          <span id="discreteMValue">300</span>
+                      </div>
+                      <div class="discrete-points-display"> <p>Total Grid Points: <span id="discreteTotalPoints">N/A</span></p> </div>
+                  </div>
+              </div>
+           </details>
+
+        <details class="control-section">
+            <summary>Particles & Appearance</summary>
+              <div class="slider-container"> <label for="particleCount" id="particleCountLabel" title="Total number of particles (Auto-set in Discrete Mode)">Particle Count:</label> <input type="range" id="particleCount" min="1000" max="500000" step="1000" value="90000"> <span id="particleCountValue">90k</span> </div>
+              <div class="slider-container"> <label for="particleSize" title="Base size of particles">Particle Size:</label> <input type="range" id="particleSize" min="0.1" max="20" step="0.1" value="1.0"> <span id="particleSizeValue">1.000</span> </div>
+              <div class="slider-container"> <label for="energyIntensity" title="Affects particle glow/brightness (visual only)">Energy Intensity:</label> <input type="range" id="energyIntensity" min="0" max="500" step="1" value="50"> <span id="energyIntensityValue">50.00</span> </div>
+              <div class="slider-container"> <label for="particleOpacity" title="Base opacity of particles">Base Opacity:</label> <input type="range" id="particleOpacity" min="0.0" max="1.0" step="0.01" value="0.8"> <span id="particleOpacityValue">0.80</span> </div>
+              <div class="slider-container"> <label for="particleOpacityVariation" title="Adds randomness to base opacity (Currently Visual Only)">Opacity Variation:</label> <input type="range" id="particleOpacityVariation" min="0.0" max="1.0" step="0.01" value="0.0"> <span id="particleOpacityVariationValue">0.00</span> </div>
+
+
+              <div class="sub-section">
+                  <h5>Coloring</h5>
+                  <div class="select-container">
+                      <label for="colorMode" title="Parameter used to determine particle color">Color Mode:</label>
+                      <select id="colorMode">
+                          <option value="manual" selected>Manual RGB</option>
+                          <option value="velocity">Velocity</option>
+                          <option value="directionChange">Direction Change</option>
+                          <option value="poloidal">Poloidal Angle</option>
+                          <option value="toroidal">Toroidal Angle</option>
+                          <option value="radialTube">Radial Pos (Tube)</option>
+                          <option value="radialXY">Radial Pos (XY)</option>
+                          <option value="distFromR">Dist from R</option>
+                          <option value="anglesHL">Angles (H=Tor, L=Pol)</option>
+                          <option value="eigenmodePhase">Eigenmode Phase</option>
+                          <option value="xyz">XYZ Position</option>
+                      </select>
+                  </div>
+                  <div id="manual-color-controls">
+                      <div class="slider-container"> <label for="particleColorR">Red:</label> <input type="range" id="particleColorR" min="0" max="1" step="0.01" value="0.39"> <span id="particleColorRValue">0.39</span> </div>
+                      <div class="slider-container"> <label for="particleColorG">Green:</label> <input type="range" id="particleColorG" min="0" max="1" step="0.01" value="0.62"> <span id="particleColorGValue">0.62</span> </div>
+                      <div class="slider-container"> <label for="particleColorB">Blue:</label> <input type="range" id="particleColorB" min="0" max="1" step="0.01" value="1.00"> <span id="particleColorBValue">1.00</span> </div>
+                      <div class="slider-container"> <label for="particleColorVariation" title="Random variation applied to manual color">Color Variation:</label> <input type="range" id="particleColorVariation" min="0" max="1" step="0.01" value="1.0"> <span id="particleColorVariationValue">1.00</span> </div>
+                  </div>
+              </div>
+
+              <div class="sub-section">
+                  <h5>Post-Processing Effects</h5>
+                  <div class="checkbox-container"> <input type="checkbox" id="enableTrails" checked> <label for="enableTrails" title="Enable motion trail effect (Post-processing)">Enable Trails</label> </div>
+                  <div class="slider-container"> <label for="trailDecay" title="How quickly trails fade (lower = longer trails)">Trail Decay:</label> <input type="range" id="trailDecay" min="0.0" max="0.998" step="0.001" value="0.938"> <span id="trailDecayValue">0.938</span> </div>
+                  <div class="checkbox-container"> <input type="checkbox" id="enableBloom" checked> <label for="enableBloom" title="Enable bloom glow effect (Post-processing)">Enable Bloom</label> </div>
+                  </div>
+           </details>
+
+        <details class="control-section">
+            <summary>Configuration Slots</summary>
+            <div class="config-slot-controls">
+                <div class="config-slot-row input-container">
+                    <label for="configNameInput">Save Name:</label>
+                    <input type="text" id="configNameInput" placeholder="Enter config name">
+                    <button id="saveConfigButton" title="Save current settings with the specified name">Save As</button>
+                </div>
+                <div class="config-slot-row select-container">
+                    <label for="configSelect">Load/Delete:</label>
+                    <select id="configSelect">
+                        <option value="">-- Select Saved Config --</option>
+                        </select>
+                    <button id="loadConfigButton" title="Load settings from the selected configuration">Load</button>
+                    <button id="deleteConfigButton" title="Delete the selected configuration">Delete</button>
+                </div>
+            </div>
+        </details>
+
+        <div class="button-container">
+            <button id="toggleUIButton" title="Show/Hide this control panel (H)">Hide UI</button>
+            <button id="showHotkeysButton" title="Display keyboard shortcuts">Hotkeys</button>
+            <a href="https://buymeacoffee.com/6af1sbu" target="_blank" rel="noopener noreferrer" class="support-button" title="Support the Developer">Support</a>
+
+            <div class="animation-controls">
+                <button id="playPauseButton" title="Play/Pause Simulation (Space)">Pause</button>
+                <label for="simSpeed">Speed:</label>
+                <input type="range" id="simSpeed" min="0.1" max="5.0" step="0.1" value="1.0" title="Simulation Speed Multiplier">
+                <span id="simSpeedValue">1.0x</span>
+            </div>
+            <div class="preset-controls">
+                <button id="restartSimButton" title="Reset camera and reinitialize particles with current settings (Shift+R)">Restart Sim</button>
+                <button id="resetPresetButton" title="Reset all settings to defaults and clear ALL saved state (Shift+Del)">Reset all</button>
+            </div>
+            <div class="view-buttons-container">
+                <button id="snapTopViewButton" title="View from Top (T)">Top</button>
+                <button id="snapBottomViewButton" title="View from Bottom">Bottom</button>
+                <button id="snapFrontViewButton" title="View from Front (F)">Front</button>
+                <button id="snapBackViewButton" title="View from Back">Back</button>
+                <button id="snapLeftViewButton" title="View from Left (L)">Left</button>
+                <button id="snapRightViewButton" title="View from Right">Right</button>
+                <button id="snapIsoNEButton" title="Isometric View (I)">Iso NE</button>
+                <button id="snapIsoNWButton" title="Isometric View">Iso NW</button>
+                <button id="snapIsoSEButton" title="Isometric View">Iso SE</button>
+                <button id="snapIsoSWButton" title="Isometric View">Iso SW</button>
+            </div>
+        </div>
+    </div>
+    <button id="showUIButton" title="Show UI Panel (H)">Show UI</button>
+
+    <div id="hotkeysPanel">
+        <button id="closeHotkeysButton" title="Close Hotkeys Panel">&times;</button>
+        <h4>Keyboard Shortcuts</h4>
+        <dl>
+            <dt>Space</dt><dd>Play / Pause Simulation</dd>
+            <dt>H</dt><dd>Show / Hide UI Panel</dd>
+            <dt>Shift + R</dt><dd>Restart Simulation (Reset Camera & Particles)</dd>
+            <dt>Shift + Delete</dt><dd>Reset All Settings (Clears Saved States)</dd>
+            <dt>T</dt><dd>Snap View to Top</dd>
+            <dt>F</dt><dd>Snap View to Front</dd>
+            <dt>L</dt><dd>Snap View to Left</dd>
+            <dt>I</dt><dd>Snap View to Isometric NE</dd>
+            <dt>Escape</dt><dd>Close this Hotkeys Panel</dd>
+        </dl>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/AfterimagePass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/AfterimageShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script>
+        // --- Global Scope ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        const initialCameraPosition = { x: 0, y: 0, z: 10000 };
+        const initialCameraRotation = { x: 0, y: 0 };
+        camera.position.z = initialCameraPosition.z;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);
+        document.body.appendChild(renderer.domElement);
+        const clock = new THREE.Clock();
+        let frameCount = 0;
+        const ambientLight = new THREE.AmbientLight(0x333333); scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6); directionalLight.position.set(1, 1, 1); scene.add(directionalLight);
+
+        const localStorageKeyPrefix = 'torusSimPreset_v17.3'; // Base prefix for keys - UPDATED VERSION
+        const autoSaveKey = `${localStorageKeyPrefix}_autosave`;
+        const namedSlotPrefix = `${localStorageKeyPrefix}_slot_`;
+
+        // --- Simulation State (v17.3 Defaults) ---
+        let simState = {
+            // Flow Dynamics
+            flowIntensity: 0.5, flowTwist: 2.0, flowCouplingFactor: 0.0,
+            angularMomentumEffect: 5.0, // --- MODIFIED Default: 5.0 (was 0.0) - Ignored by physics when checkbox below is true
+            approximateAngularMomentum: true, // Default: true (enabled)
+            windingTheta: 0, windingPhi: 0, solitonPhasing: 0.0,
+            jitterScale: 0.0, visualizeEigenmode: false, eigenmodeM: 1, eigenmodeN: 2, eigenmodeFlowStrength: 0.0,
+            // Geometry & Structure
+            arrangementMode: 'single', tubeRadius: 2940, torusRadius: 3000, pulseAmplitude: 0.0, pulseFrequency: 0.5,
+            numInnerTori: 0, innerTorusRatio: 0.5, useDiscretePlacement: true, discreteN: 300, discreteM: 300,
+            discreteSlidersLinked: true,
+            // Particles & Appearance
+            userParticleCount: 90000, particleCount: 90000, particleSize: 1.0, energyIntensity: 50.0,
+            particleOpacity: 0.8, particleOpacityVariation: 0.0, colorMode: 'manual', particleColorR: 0.39,
+            particleColorG: 0.62, particleColorB: 1.00, particleColorVariation: 1.0,
+            // Post-Processing
+            enableTrails: true, trailDecay: 0.938, enableBloom: true,
+            // Animation & UI
+            isPaused: false, simSpeed: 1.0, uiVisible: true,
+            // Camera
+            cameraPosition: { ...initialCameraPosition }, cameraRotation: { ...initialCameraRotation },
+            targetCameraRotation: { ...initialCameraRotation },
+        };
+
+        // --- Three.js Setup & Helpers ---
+        const shellColors = [
+            new THREE.Color(0xFF00FF), // Shell 0: Magenta/Pink
+            new THREE.Color(0x4B0082), // Shell 1: Indigo (Deep Purple)
+            new THREE.Color(0x0000FF), // Shell 2: Blue
+            new THREE.Color(0x00FF00), // Shell 3: Green
+            new THREE.Color(0xFFFF00), // Shell 4: Yellow
+            new THREE.Color(0xFF7F00), // Shell 5: Orange
+            new THREE.Color(0xFF0000)  // Shell 6: Red
+           ];
+        const defaultParticleColor = new THREE.Color(0xcccccc);
+        const arrangementGroup = new THREE.Group(); scene.add(arrangementGroup);
+        const particlesMaterial = new THREE.PointsMaterial({ size: simState.particleSize, vertexColors: true, transparent: true, opacity: simState.particleOpacity, blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false });
+        const maxParticleCount = 500000;
+        const tempColor = new THREE.Color(); const tempVec3 = new THREE.Vector3(); const tempVec3_2 = new THREE.Vector3(); const worldUp = new THREE.Vector3(0, 1, 0); const twoPi = Math.PI * 2; const epsilon = 0.00001;
+        const MAX_EXPECTED_SPEED = 1500;
+        const MAX_FLOW_SPEED = 0.03;
+        const ARRANGEMENT_BASE_SCALE_FACTOR = 2.0; const ARRANGEMENT_3D_CONTRACTION = 0.7; const phiGolden = (1 + Math.sqrt(5)) / 2;
+        const BASE_WIND_STEP = 0.01;
+        const MAX_POS_EXTENT = 10000;
+
+        // --- Post Processing Setup ---
+        const composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        const afterimagePass = new THREE.AfterimagePass();
+        afterimagePass.uniforms["damp"].value = simState.trailDecay;
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+        bloomPass.threshold = 0.2; bloomPass.strength = 0.6; bloomPass.radius = 0.55;
+
+        let isDragging = false; let previousMousePosition = { x: 0, y: 0 };
+        const cameraTransitionSpeed = 0.08;
+
+        // --- Velocity Tracking ---
+        let previousVelocities = null;
+        const prevVelVec = new THREE.Vector3(); const currVelVec = new THREE.Vector3(); const normPrev = new THREE.Vector3(); const normCurr = new THREE.Vector3();
+
+        // --- Helper Functions ---
+        function calculateEigenvalue(m, n, r, R) { if(Math.abs(r)<epsilon||Math.abs(R)<epsilon) return NaN; return -((m*m)/(r*r)+(n*n)/(R*R)); }
+        function randomOffset(scale) { return (Math.random() - 0.5) * 2 * scale; }
+        function lerp(start, end, t) { return start * (1 - t) + end * t; }
+        function angleLerp(a0, a1, t) { const max = Math.PI * 2; const da = (a1 - a0) % max; return a0 + (((2 * da) % max) - da) * t; }
+        function debounce(func, wait) {
+          let timeout;
+          return function executedFunction(...args) {
+            const later = () => { clearTimeout(timeout); func(...args); };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+          };
+        }
+
+        // --- Arrangement Offset Calculation (3D removed) ---
+        function getArrangementOffsets(mode, baseRadius) {
+            const offsets = [];
+            const S_base = Math.max(100, Math.abs(baseRadius)) * ARRANGEMENT_BASE_SCALE_FACTOR;
+            const R_fol = S_base / ARRANGEMENT_BASE_SCALE_FACTOR;
+            const S_3d = S_base * ARRANGEMENT_3D_CONTRACTION;
+
+            switch (mode) {
+                case 'flowerOfLife2D': offsets.push({ x: 0, y: 0, z: 0 }); for (let i = 0; i < 6; i++) { offsets.push({ x: R_fol * Math.cos(i * Math.PI / 3), y: R_fol * Math.sin(i * Math.PI / 3), z: 0 }); } const Rsqrt3_FoL = R_fol * Math.sqrt(3); for (let i = 0; i < 6; i++) { offsets.push({ x: Rsqrt3_FoL * Math.cos(Math.PI / 6 + i * Math.PI / 3), y: Rsqrt3_FoL * Math.sin(Math.PI / 6 + i * Math.PI / 3), z: 0 }); } const R2_FoL = 2 * R_fol; for (let i = 0; i < 6; i++) { offsets.push({ x: R2_FoL * Math.cos(i * Math.PI / 3), y: R2_FoL * Math.sin(i * Math.PI / 3), z: 0 }); } break;
+                case 'fruitOfLife': offsets.push({ x: 0, y: 0, z: 0 }); for (let i = 0; i < 6; i++) { offsets.push({ x: R_fol * Math.cos(i * Math.PI / 3), y: R_fol * Math.sin(i * Math.PI / 3), z: 0 }); } const Rsqrt3_Fruit = R_fol * Math.sqrt(3); for (let i = 0; i < 6; i++) { offsets.push({ x: Rsqrt3_Fruit * Math.cos(Math.PI / 6 + i * Math.PI / 3), y: Rsqrt3_Fruit * Math.sin(Math.PI / 6 + i * Math.PI / 3), z: 0 }); } break;
+                case 'vesicaPiscis': offsets.push({ x: -R_fol / 2, y: 0, z: 0 }); offsets.push({ x: R_fol / 2, y: 0, z: 0 }); break;
+                case 'treeOfLife': const stl = S_base * 0.5; offsets.push({ x: 0, y: 1.5 * stl, z: 0 }); offsets.push({ x: -0.5 * stl, y: 1.0 * stl, z: 0 }); offsets.push({ x: 0.5 * stl, y: 1.0 * stl, z: 0 }); offsets.push({ x: -0.75 * stl, y: 0.25 * stl, z: 0 }); offsets.push({ x: 0.75 * stl, y: 0.25 * stl, z: 0 }); offsets.push({ x: 0, y: 0 * stl, z: 0 }); offsets.push({ x: -0.75 * stl, y: -0.5 * stl, z: 0 }); offsets.push({ x: 0.75 * stl, y: -0.5 * stl, z: 0 }); offsets.push({ x: 0, y: -1.0 * stl, z: 0 }); offsets.push({ x: 0, y: -1.5 * stl, z: 0 }); break;
+                case 'tetrahedron': const st = S_3d * 0.6; offsets.push({ x: st, y: st, z: st }); offsets.push({ x: st, y: -st, z: -st }); offsets.push({ x: -st, y: st, z: -st }); offsets.push({ x: -st, y: -st, z: st }); break;
+                case 'cube': const sc = S_3d * 0.6; for (let i = -1; i <= 1; i += 2) { for (let j = -1; j <= 1; j += 2) { for (let k = -1; k <= 1; k += 2) { offsets.push({ x: i * sc, y: j * sc, z: k * sc }); } } } break;
+                case 'octahedron': const so = S_3d * 0.8; offsets.push({ x: so, y: 0, z: 0 }); offsets.push({ x: -so, y: 0, z: 0 }); offsets.push({ x: 0, y: so, z: 0 }); offsets.push({ x: 0, y: -so, z: 0 }); offsets.push({ x: 0, y: 0, z: so }); offsets.push({ x: 0, y: 0, z: -so }); break;
+                case 'starTetrahedron': const sm = S_3d * 0.6; offsets.push({ x: sm, y: sm, z: sm }); offsets.push({ x: sm, y: -sm, z: -sm }); offsets.push({ x: -sm, y: sm, z: -sm }); offsets.push({ x: -sm, y: -sm, z: sm }); offsets.push({ x: -sm, y: -sm, z: -sm }); offsets.push({ x: -sm, y: sm, z: sm }); offsets.push({ x: sm, y: -sm, z: sm }); offsets.push({ x: sm, y: sm, z: -sm }); break;
+                case 'icosahedron': const si = S_3d * 0.5; offsets.push({x: 0, y: si, z: si * phiGolden}); offsets.push({x: 0, y: -si, z: si * phiGolden}); offsets.push({x: 0, y: si, z: -si * phiGolden}); offsets.push({x: 0, y: -si, z: -si * phiGolden}); offsets.push({y: 0, z: si, x: si * phiGolden}); offsets.push({y: 0, z: -si, x: si * phiGolden}); offsets.push({y: 0, z: si, x: -si * phiGolden}); offsets.push({y: 0, z: -si, x: -si * phiGolden}); offsets.push({z: 0, x: si, y: si * phiGolden}); offsets.push({z: 0, x: -si, y: si * phiGolden}); offsets.push({z: 0, x: si, y: -si * phiGolden}); offsets.push({z: 0, x: -si, y: -si * phiGolden}); break;
+                case 'dodecahedron': const sd = S_3d * 0.4; const sd_phi = sd * phiGolden; const sd_phi_inv = sd / phiGolden; for (let i = -1; i <= 1; i += 2) { for (let j = -1; j <= 1; j += 2) { offsets.push({x: 0, y: i * sd_phi_inv, z: j * sd_phi }); offsets.push({y: 0, z: i * sd_phi_inv, x: j * sd_phi }); offsets.push({z: 0, x: i * sd_phi_inv, y: j * sd_phi }); for (let k = -1; k <= 1; k += 2) { offsets.push({ x: i * sd, y: j * sd, z: k * sd }); } } } break;
+                // Removed flowerOfLife3D and fruitOfLife3D cases
+                case 'single': default: offsets.push({ x: 0, y: 0, z: 0 }); break;
+            }
+            return offsets;
+        }
+
+        // --- Core Logic Functions ---
+        // createParticleSystem
+        function createParticleSystem(targetTotalCount) {
+            const oldSinglePS = scene.getObjectByName('particleSystem'); if (oldSinglePS) { if (oldSinglePS.geometry) oldSinglePS.geometry.dispose(); scene.remove(oldSinglePS); }
+            while (arrangementGroup.children.length > 0) { const child = arrangementGroup.children[0]; if (child.geometry) child.geometry.dispose(); arrangementGroup.remove(child); }
+            arrangementGroup.rotation.set(0, 0, 0);
+
+            let actualTotalParticles = 0; arrangementGroup.visible = false;
+
+            let currentTargetCount = targetTotalCount;
+            if (simState.useDiscretePlacement && simState.discreteN > 0 && simState.discreteM > 0) {
+                currentTargetCount = simState.discreteN * simState.discreteM;
+                if (simState.userParticleCount !== currentTargetCount) {
+                    simState.userParticleCount = currentTargetCount;
+                }
+            }
+
+            if (simState.arrangementMode === 'single') {
+                const singleGeom = createSingleTorusGeometry(currentTargetCount);
+                if (singleGeom) {
+                    actualTotalParticles = singleGeom.attributes.position.count;
+                    const singleMesh = new THREE.Points(singleGeom, particlesMaterial);
+                    singleMesh.name = 'particleSystem';
+                    scene.add(singleMesh);
+                }
+            } else {
+                arrangementGroup.visible = true; const offsets = getArrangementOffsets(simState.arrangementMode, simState.torusRadius); const numObjects = offsets.length;
+                if (numObjects === 0) { console.error("No offsets for mode:", simState.arrangementMode); simState.particleCount = 0; return; }
+                const particlesPerObject = Math.max(1, Math.floor(currentTargetCount / numObjects));
+                let totalParticlesInArrangement = 0;
+
+                for (let i = 0; i < numObjects; i++) {
+                    const offset = offsets[i];
+                    const torusGeom = createSingleTorusGeometry(particlesPerObject);
+                    if (torusGeom) {
+                        const meshParticleCount = torusGeom.attributes.position.count;
+                        totalParticlesInArrangement += meshParticleCount;
+                        const torusMesh = new THREE.Points(torusGeom, particlesMaterial);
+                        torusMesh.name = `torus_${i}`;
+                        torusMesh.position.set(offset.x, offset.y, offset.z);
+                        arrangementGroup.add(torusMesh);
+                    }
+                 }
+                actualTotalParticles = totalParticlesInArrangement;
+                if (simState.arrangementMode === 'flowerOfLife2D') { arrangementGroup.rotation.z = Math.PI / 6; }
+            }
+            simState.particleCount = actualTotalParticles;
+
+            if (!previousVelocities || previousVelocities.length !== actualTotalParticles * 3) {
+                previousVelocities = new Float32Array(actualTotalParticles * 3);
+                console.log("Initialized global previousVelocities array with size:", previousVelocities.length);
+            }
+
+            updateControlValue('particleCount', simState.userParticleCount, controlsConfig.particleCount);
+            updateDiscretePointsDisplay();
+            toggleParticleCountSlider(!simState.useDiscretePlacement);
+           }
+
+        // createSingleTorusGeometry
+        function createSingleTorusGeometry(count) {
+            if (count <= 0) return null; count = Math.min(count, maxParticleCount);
+            const newPosArray = new Float32Array(count * 3); const newColorArray = new Float32Array(count * 3);
+            // NOTE: Opacity Variation is not implemented visually per-particle here.
+
+            const totalShells = simState.numInnerTori + 1;
+            const approxParticlesPerShell = totalShells > 0 ? Math.max(1, Math.floor(count / totalShells)) : 0;
+            let particlesPlaced = 0;
+
+            let baseTR = simState.torusRadius; let baseTuR = simState.tubeRadius;
+            if (Math.abs(baseTR) <= Math.abs(baseTuR)) { baseTR = (Math.sign(baseTR) || 1) * (Math.abs(baseTuR) + epsilon); }
+            let placeTR = Math.sign(baseTR) * Math.max(epsilon, Math.abs(baseTR));
+            let placeTuR = Math.sign(baseTuR) * Math.max(epsilon, Math.abs(baseTuR));
+
+            const useDiscrete = simState.useDiscretePlacement && simState.discreteN > 0 && simState.discreteM > 0;
+            const geomStepN = useDiscrete ? twoPi / simState.discreteN : 0;
+            const geomStepM = useDiscrete ? twoPi / simState.discreteM : 0;
+            const numGridPoints = useDiscrete ? simState.discreteN * simState.discreteM : 0;
+
+            const maxXYRad = Math.abs(placeTR) + Math.abs(placeTuR);
+
+            for (let shellIndex = 0; shellIndex < totalShells; shellIndex++) {
+                const shellRatio = Math.pow(simState.innerTorusRatio, shellIndex);
+                let currentPlaceTR = placeTR * shellRatio;
+                let currentPlaceTuR = placeTuR * shellRatio;
+
+                if (Math.abs(currentPlaceTR) <= Math.abs(currentPlaceTuR)) { currentPlaceTR = (Math.sign(currentPlaceTR) || 1) * (Math.abs(currentPlaceTuR) + epsilon); }
+                currentPlaceTR = Math.sign(currentPlaceTR) * Math.max(epsilon, Math.abs(currentPlaceTR));
+                currentPlaceTuR = Math.sign(currentPlaceTuR) * Math.max(epsilon, Math.abs(currentPlaceTuR));
+
+                const shellColor = shellColors[shellIndex % shellColors.length] || defaultParticleColor; // Use modulo for safety
+
+                const countForThisShell = (shellIndex === totalShells - 1) ? count - particlesPlaced : Math.min(approxParticlesPerShell, count - particlesPlaced);
+                const effectiveTotal = countForThisShell;
+
+                for (let j = 0; j < countForThisShell; j++) {
+                    const i = particlesPlaced + j;
+                    const effectiveIndex = j;
+                    let a1, a2;
+
+                    if (useDiscrete && effectiveTotal > 0) {
+                        const scaledGi = (effectiveIndex / Math.max(1, effectiveTotal)) * numGridPoints;
+                        const gi = Math.floor(scaledGi);
+                        const clampedGi = Math.max(0, Math.min(numGridPoints - 1, gi));
+                        const mi = clampedGi % simState.discreteM;
+                        const ni = Math.floor(clampedGi / simState.discreteM);
+                        a1 = mi * geomStepM;
+                        a2 = ni * geomStepN;
+                        if (effectiveTotal > numGridPoints) {
+                            a1 += (Math.random() - 0.5) * geomStepM * 0.5;
+                            a2 += (Math.random() - 0.5) * geomStepN * 0.5;
+                        }
+                    } else {
+                        a1 = Math.random() * twoPi;
+                        a2 = Math.random() * twoPi;
+                    }
+
+                    const idx = i * 3; const cosA2 = Math.cos(a2); const x = (currentPlaceTR + currentPlaceTuR * cosA2) * Math.cos(a1); const y = (currentPlaceTR + currentPlaceTuR * cosA2) * Math.sin(a1); const z = currentPlaceTuR * Math.sin(a2);
+                    newPosArray[idx] = x; newPosArray[idx + 1] = y; newPosArray[idx + 2] = z;
+
+                    if (simState.colorMode === 'manual' && totalShells > 1) {
+                        tempColor.copy(shellColor); // Apply specific shell color
+                        const variation = Math.random() * simState.particleColorVariation;
+                        tempColor.offsetHSL(0, (Math.random()-0.5) * variation * 0.5, (Math.random()-0.5) * variation*0.2);
+                        tempColor.r = Math.max(0, Math.min(1, tempColor.r));
+                        tempColor.g = Math.max(0, Math.min(1, tempColor.g));
+                        tempColor.b = Math.max(0, Math.min(1, tempColor.b));
+                    } else if (simState.colorMode === 'manual') {
+                        // Use manual RGB sliders + variation if only one shell or if multiple shells but not using 'manual' color specifically for shells
+                        const variation = Math.random() * simState.particleColorVariation;
+                        tempColor.setRGB(
+                            Math.max(0, Math.min(1, simState.particleColorR - variation * simState.particleColorR)),
+                            Math.max(0, Math.min(1, simState.particleColorG - variation * simState.particleColorG)),
+                            Math.max(0, Math.min(1, simState.particleColorB - variation * simState.particleColorB))
+                        );
+                    } else {
+                        // Dynamic coloring based on selected mode
+                        switch (simState.colorMode) {
+                            case 'velocity': case 'directionChange': tempColor.setRGB(0.8,0.8,0.8); break;
+                            case 'poloidal': tempColor.setHSL(a2/twoPi, 1.0, 0.5); break;
+                            case 'radialTube': const nD=Math.abs(Math.sin(a2)); const v=1.0-nD*0.6; tempColor.setHSL(a1/twoPi, 1.0, Math.max(0.2,v)); break;
+                            case 'toroidal': tempColor.setHSL(a1/twoPi, 0.9, 0.55); break;
+                            case 'radialXY': const xyRad = Math.sqrt(x*x + y*y); tempColor.setHSL(0.7, 1.0, Math.min(1.0, xyRad / (maxXYRad + epsilon))); break;
+                            case 'distFromR': const distR = Math.abs(Math.sqrt(x*x + y*y) - currentPlaceTR); tempColor.setHSL(0.3, 1.0, Math.min(1.0, distR / (Math.abs(currentPlaceTuR) + epsilon))); break;
+                            case 'anglesHL': tempColor.setHSL(a1 / twoPi, 1.0, 0.5 + 0.4 * Math.sin(a2)); break;
+                            case 'eigenmodePhase': const phase=(simState.eigenmodeM*a2+simState.eigenmodeN*a1); tempColor.setHSL((phase/twoPi+1.0)%1.0, 1.0, 0.5); break;
+                            case 'xyz': const nX=(x/MAX_POS_EXTENT+1)/2; const nY=(y/MAX_POS_EXTENT+1)/2; const nZ=(z/MAX_POS_EXTENT+1)/2; tempColor.setRGB(Math.max(0,Math.min(1,nX)),Math.max(0,Math.min(1,nY)),Math.max(0,Math.min(1,nZ))); break;
+                            default: tempColor.copy(defaultParticleColor);
+                        }
+                    }
+                    newColorArray[idx] = tempColor.r; newColorArray[idx + 1] = tempColor.g; newColorArray[idx + 2] = tempColor.b;
+                }
+                particlesPlaced += countForThisShell;
+            }
+
+            const newGeom = new THREE.BufferGeometry();
+            newGeom.setAttribute('position', new THREE.BufferAttribute(newPosArray, 3));
+            newGeom.setAttribute('color', new THREE.BufferAttribute(newColorArray, 3));
+            newGeom.computeBoundingSphere();
+            return newGeom;
+           }
+
+        // updateParticlePositions
+        function updateParticlePositions(currentGeom, baseEffR, baseEffr, delta, particleOffset) {
+            if (!previousVelocities || previousVelocities.length < (particleOffset + currentGeom.attributes.position.count) * 3) { console.error("PrevVelocities mismatch/uninit"); return; }
+            if (delta <= 0 || !currentGeom?.attributes?.position?.array || !currentGeom?.attributes?.color?.array) return;
+
+            const pos = currentGeom.attributes.position.array;
+            const colors = currentGeom.attributes.color.array;
+            const colorAttribute = currentGeom.attributes.color;
+            const count = currentGeom.attributes.position.count;
+            let needsDynamicColorUpdate = (simState.colorMode === 'velocity' || simState.colorMode === 'directionChange' || simState.colorMode === 'eigenmodePhase');
+
+            const flowIntensity = simState.flowIntensity; const flowTwist = simState.flowTwist;
+            const totalSpeedMag = flowIntensity * MAX_FLOW_SPEED; const twistDenom = Math.sqrt(1.0 + flowTwist * flowTwist);
+            const base_v_p = totalSpeedMag / twistDenom; const base_v_t = flowTwist * base_v_p;
+            const flowCouple = simState.flowCouplingFactor; const angMomEffect = simState.angularMomentumEffect;
+            const approxAngMom = simState.approximateAngularMomentum; const windingPhiStep = simState.windingPhi * BASE_WIND_STEP;
+            const windingThetaStep = simState.windingTheta * BASE_WIND_STEP; const doSoliton = simState.solitonPhasing > 0;
+            const solCoh = simState.solitonPhasing; const doJitter = simState.jitterScale > 0; const jitterScale = simState.jitterScale;
+            const useDiscrete = simState.useDiscretePlacement && simState.discreteN > 0 && simState.discreteM > 0;
+            const discreteN = simState.discreteN; const discreteM = simState.discreteM;
+            const numGridPoints = useDiscrete ? discreteN * discreteM : 0; const stepN = useDiscrete ? twoPi / discreteN : 0;
+            const stepM = useDiscrete ? twoPi / discreteM : 0; const doGridSnap = doSoliton && useDiscrete;
+            const doEigenmode = simState.visualizeEigenmode && simState.eigenmodeFlowStrength !== 0;
+            const eigenStr = simState.eigenmodeFlowStrength; const eigenM = simState.eigenmodeM; const eigenN = simState.eigenmodeN;
+            // const baseLFactor = approxAngMom ? Math.abs(base_v_t * baseEffR) : 0; // Not directly used like this
+            const deltaInv = 1.0 / (delta + epsilon);
+            const innerTorusRatio = simState.innerTorusRatio; const totalShells = simState.numInnerTori + 1;
+            const approxParticlesPerShell = count > 0 ? Math.max(1, Math.floor(count / totalShells)) : 1;
+
+            for(let i = 0; i < count; i++) {
+                const idx = i * 3; const globalIdx = (particleOffset + i) * 3; const colorIdx = idx;
+
+                let shellIndex = Math.floor(i / approxParticlesPerShell); shellIndex = Math.min(shellIndex, totalShells - 1);
+                const shellRatio = Math.pow(innerTorusRatio, shellIndex);
+                let currentEffR = baseEffR * shellRatio; let currentEffr = baseEffr * shellRatio;
+                if (Math.abs(currentEffR) <= Math.abs(currentEffr)) { currentEffR = (Math.sign(currentEffR) || 1) * (Math.abs(currentEffr) + epsilon); }
+                currentEffR = Math.sign(currentEffR) * Math.max(epsilon, Math.abs(currentEffR));
+                currentEffr = Math.sign(currentEffr) * Math.max(epsilon, Math.abs(currentEffr));
+
+                const x_o=pos[idx]; const y_o=pos[idx+1]; const z_o=pos[idx+2];
+                const vx_prev = previousVelocities[globalIdx]; const vy_prev = previousVelocities[globalIdx + 1]; const vz_prev = previousVelocities[globalIdx + 2];
+                prevVelVec.set(vx_prev, vy_prev, vz_prev);
+
+                const rad_o=Math.sqrt(x_o*x_o+y_o*y_o); const a1_o=Math.atan2(y_o,x_o);
+                const a2d_o = rad_o - currentEffR; const a2_o=Math.abs(a2d_o)<epsilon?(z_o>=0?Math.PI/2:-Math.PI/2):Math.atan2(z_o,a2d_o);
+                const smFctr=Math.sin(a2_o); const signF = smFctr; const crxy_o = rad_o < epsilon ? epsilon : rad_o;
+
+                let eigenmodeModulationFactor = 1.0;
+                if(doEigenmode) {
+                    const phase = (eigenM * a2_o + eigenN * a1_o);
+                    eigenmodeModulationFactor = 1.0 + eigenStr * Math.cos(phase);
+                    eigenmodeModulationFactor = eigenmodeModulationFactor < 0.1 ? 0.1 : eigenmodeModulationFactor;
+                    if (simState.colorMode === 'eigenmodePhase') needsDynamicColorUpdate = true; // Update color if mode active
+                }
+                const modulatedInwardSpeed = base_v_p * eigenmodeModulationFactor;
+                const modulatedRotationalSpeed = base_v_t * eigenmodeModulationFactor;
+                let effInwSpd = modulatedInwardSpeed; let baseRotationalVelocityMagnitude;
+
+                // --- Physics Calculation: Choose between Approx Ang Mom or Slider Effect ---
+                if (approxAngMom) {
+                    // Approximate Angular Momentum: v_t ~ L / r
+                    const L_characteristic = Math.abs(modulatedRotationalSpeed * currentEffR); // Characteristic L based on default speed at major radius
+                    baseRotationalVelocityMagnitude = L_characteristic / crxy_o;
+                } else {
+                    // Use Ang. Momentum Effect Slider: Increases speed closer to center based on slider value
+                    let spdF = 1.0;
+                    if (angMomEffect > 0) {
+                        const bRfs = currentEffR < epsilon ? epsilon : currentEffR; // Base radius for scaling factor
+                        spdF = 1 + angMomEffect * (bRfs / crxy_o - 1); // Factor increases as crxy_o < bRfs
+                        spdF = spdF < 0.1 ? 0.1 : (spdF > (angMomEffect + 1.5) ? (angMomEffect + 1.5) : spdF); // Clamp speed factor (adjust max based on effect strength)
+                    }
+                    baseRotationalVelocityMagnitude = modulatedRotationalSpeed * spdF;
+                }
+                // --- End Physics Choice ---
+
+                let baseRotSpd = signF * baseRotationalVelocityMagnitude; // Apply direction based on poloidal position
+                if (flowCouple !== 0) { const normRotSpeed = Math.abs(baseRotationalVelocityMagnitude) / (base_v_t + epsilon); const couplingEffectOnInward = flowCouple * normRotSpeed; effInwSpd *= (1.0 + couplingEffectOnInward); }
+
+                let a1_base = a1_o + baseRotSpd; let a2_base = a2_o + effInwSpd;
+                if(windingPhiStep !== 0) { a1_base += windingPhiStep; } if(windingThetaStep !== 0) { a2_base += windingThetaStep; }
+
+                const cosA2_base = Math.cos(a2_base); const sinA2_base = Math.sin(a2_base);
+                const rFactor = currentEffR + currentEffr * cosA2_base;
+                const x_base = rFactor * Math.cos(a1_base); const y_base = rFactor * Math.sin(a1_base); const z_base = currentEffr * sinA2_base;
+
+                let final_x = x_base; let final_y = y_base; let final_z = z_base;
+                if(doSoliton) {
+                    let target_x, target_y, target_z;
+                    if(doGridSnap) {
+                        const global_i = particleOffset + i; const target_gi = global_i % numGridPoints;
+                        const target_mi = target_gi % discreteM; const target_ni = Math.floor(target_gi / discreteM);
+                        const target_a1 = target_mi * stepM; const target_a2 = target_ni * stepN;
+                        const cos_a2_target = Math.cos(target_a2); const rFactor_target = currentEffR + currentEffr * cos_a2_target;
+                        target_x = rFactor_target * Math.cos(target_a1); target_y = rFactor_target * Math.sin(target_a1); target_z = currentEffr * Math.sin(target_a2);
+                    } else { target_x = x_base; target_y = y_base; target_z = z_base; }
+                    const devX = target_x - final_x; const devY = target_y - final_y; const devZ = target_z - final_z;
+                    final_x += devX * solCoh; final_y += devY * solCoh; final_z += devZ * solCoh;
+                }
+
+                let calc_x = final_x; let calc_y = final_y; let calc_z = final_z;
+                if (doJitter) { calc_x += randomOffset(jitterScale); calc_y += randomOffset(jitterScale); calc_z += randomOffset(jitterScale); }
+                const render_x = calc_x; const render_y = calc_y; const render_z = calc_z;
+
+                const dx = calc_x - x_o; const dy = calc_y - y_o; const dz = calc_z - z_o;
+                const vx_curr = dx * deltaInv; const vy_curr = dy * deltaInv; const vz_curr = dz * deltaInv;
+                currVelVec.set(vx_curr, vy_curr, vz_curr);
+
+                previousVelocities[globalIdx] = vx_curr; previousVelocities[globalIdx + 1] = vy_curr; previousVelocities[globalIdx + 2] = vz_curr;
+                pos[idx] = render_x; pos[idx + 1] = render_y; pos[idx + 2] = render_z;
+
+                if (needsDynamicColorUpdate) {
+                    tempColor.setRGB(colors[colorIdx], colors[colorIdx + 1], colors[colorIdx + 2]);
+                    if (simState.colorMode === 'velocity') { const speed = currVelVec.length(); if (isFinite(speed)){ const ns = Math.min(1.0, speed / (MAX_EXPECTED_SPEED || 1)); tempColor.setHSL(0.66 - ns * 0.66, 1.0, 0.5); } else { tempColor.setRGB(1, 0, 1); } }
+                    else if (simState.colorMode === 'directionChange') { let normalizedAngle = 0; const prevLenSq = prevVelVec.lengthSq(); const currLenSq = currVelVec.lengthSq(); if (prevLenSq > epsilon && currLenSq > epsilon) { normPrev.copy(prevVelVec).normalize(); normCurr.copy(currVelVec).normalize(); const dot = normPrev.dot(normCurr); normalizedAngle = (1.0 - Math.max(-1.0, Math.min(1.0, dot))) * 0.5; } tempColor.setHSL(0.66 - normalizedAngle * 0.66, 1.0, 0.5); }
+                    else if (simState.colorMode === 'eigenmodePhase' && doEigenmode) { const final_a1 = Math.atan2(render_y, render_x); const final_rad = Math.sqrt(render_x*render_x + render_y*render_y); const final_a2_d = final_rad - currentEffR; const final_a2 = Math.abs(final_a2_d)<epsilon?(render_z>=0?Math.PI/2:-Math.PI/2):Math.atan2(render_z,final_a2_d); const phase = (eigenM * final_a2 + eigenN * final_a1); tempColor.setHSL((phase / twoPi + 1.0) % 1.0, 1.0, 0.5); }
+                    colors[colorIdx] = tempColor.r; colors[colorIdx + 1] = tempColor.g; colors[colorIdx + 2] = tempColor.b;
+                }
+            }
+            currentGeom.attributes.position.needsUpdate = true;
+            colorAttribute.needsUpdate = needsDynamicColorUpdate;
+        }
+
+        // --- UI Update Functions ---
+        function updateDiscretePlacementControlsVisibility() { document.getElementById('discrete-placement-controls')?.classList.toggle('visible', simState.useDiscretePlacement); updateDiscretePointsDisplay(); }
+        function updateEigenmodeControlsVisibility() { document.getElementById('eigenmode-controls')?.classList.toggle('visible', simState.visualizeEigenmode); }
+        function updateManualColorControlsVisibility() { document.getElementById('manual-color-controls')?.classList.toggle('visible', simState.colorMode === 'manual'); }
+        function updateDiscretePointsDisplay() { const totalPointsSpan = document.getElementById('discreteTotalPoints'); if (totalPointsSpan) { totalPointsSpan.textContent = (simState.useDiscretePlacement && simState.discreteN > 0 && simState.discreteM > 0) ? (simState.discreteN * simState.discreteM).toLocaleString() : 'N/A'; } }
+        function updateParticleGlow() {
+               if(particlesMaterial) {
+                   const intensityFactor = Math.min(1.0, simState.energyIntensity / 250.0);
+                   const baseOpacity = simState.particleOpacity;
+                   const variation = simState.particleOpacityVariation;
+                   const effectiveOpacity = baseOpacity * (1 - variation * 0.5); // Placeholder variation effect
+                   particlesMaterial.opacity = Math.min(effectiveOpacity, 0.6 + intensityFactor * 0.4);
+               }
+           }
+
+        let fadeTimeoutId = null; // Variable to hold the fade timeout ID
+        function toggleUI(visible) {
+            const c = document.getElementById('controls');
+            const sB = document.getElementById('showUIButton');
+            const tB = document.getElementById('toggleUIButton');
+            if (!c || !sB || !tB) return;
+
+            clearTimeout(fadeTimeoutId); // Clear any pending fade timeout
+            sB.classList.remove('faded-out'); // Ensure button is not faded when UI state changes
+
+            simState.uiVisible = visible;
+            if (visible) {
+                c.style.opacity = '1'; c.style.pointerEvents = 'auto'; c.style.transform = 'translateX(0)';
+                sB.classList.remove('visible'); tB.textContent = 'Hide UI';
+            } else {
+                c.style.opacity = '0'; c.style.pointerEvents = 'none'; c.style.transform = 'translateX(-20px)';
+                sB.classList.add('visible'); tB.textContent = 'Show UI';
+                // Start fade-out timer for the "Show UI" button
+                fadeTimeoutId = setTimeout(() => { sB.classList.add('faded-out'); }, 3000); // Start fade after 3 seconds
+            }
+           }
+
+        function updateComposerPasses() {
+            composer.passes = [renderPass]; // Start with the base render pass
+            if (simState.enableTrails && afterimagePass) {
+                composer.addPass(afterimagePass);
+            }
+            if (simState.enableBloom && bloomPass) {
+                composer.addPass(bloomPass);
+            }
+            console.log("Composer passes updated. Trails:", simState.enableTrails, "Bloom:", simState.enableBloom);
+        }
+        function toggleParticleCountSlider(enabled) { const slider = document.getElementById('particleCount'); const label = document.getElementById('particleCountLabel'); const span = document.getElementById('particleCountValue'); if (slider) slider.disabled = !enabled; if (label) label.classList.toggle('disabled', !enabled); if (span) span.classList.toggle('disabled', !enabled); if (label) label.style.cursor = enabled ? 'help' : 'not-allowed'; }
+        function syncParticleCountToGrid(triggerRebuild = false) { if (simState.useDiscretePlacement && simState.discreteN > 0 && simState.discreteM > 0) { const gridSize = simState.discreteN * simState.discreteM; let countChanged = simState.userParticleCount !== gridSize; if (countChanged) { simState.userParticleCount = gridSize; updateControlValue('particleCount', gridSize, controlsConfig.particleCount); } toggleParticleCountSlider(false); if (triggerRebuild && countChanged) { createParticleSystem(simState.userParticleCount); } } else { toggleParticleCountSlider(true); } }
+        function updateDiscreteLinkIcon() { const icon = document.getElementById('discreteLinkIcon'); if (icon) { icon.classList.toggle('active', simState.discreteSlidersLinked); icon.textContent = simState.discreteSlidersLinked ? '🔒' : '🔗'; icon.title = simState.discreteSlidersLinked ? 'Unlink N and M sliders' : 'Link N and M sliders'; } }
+
+        // --- Animation Loop ---
+        function animate() {
+            frameCount++; requestAnimationFrame(animate);
+            let delta = clock.getDelta() * simState.simSpeed; if (simState.isPaused) { delta = 0; }
+
+            let baseEffR = simState.torusRadius; let baseEffr = simState.tubeRadius;
+            if (simState.pulseAmplitude > 0 && simState.pulseFrequency > 0) {
+                const time = clock.getElapsedTime(); const pf = simState.pulseAmplitude * Math.sin(time * simState.pulseFrequency * twoPi);
+                baseEffR += pf; baseEffr += pf * 0.5;
+                if (Math.abs(baseEffR) <= Math.abs(baseEffr)) { baseEffR = (Math.sign(baseEffR) || 1) * (Math.abs(baseEffr) + epsilon); }
+                baseEffR = Math.sign(baseEffR) * Math.max(epsilon, Math.abs(baseEffR)); baseEffr = Math.sign(baseEffr) * Math.max(epsilon, Math.abs(baseEffr));
+            }
+
+            if (delta > 0) {
+                if (simState.arrangementMode === 'single') { const ps = scene.getObjectByName('particleSystem'); if (ps?.geometry) { updateParticlePositions(ps.geometry, baseEffR, baseEffr, delta, 0); } }
+                else { let cumulativeOffset = 0; arrangementGroup.children.forEach(mesh => { if (mesh.geometry) { updateParticlePositions(mesh.geometry, baseEffR, baseEffr, delta, cumulativeOffset); cumulativeOffset += mesh.geometry.attributes.position.count; } }); }
+            }
+
+            simState.cameraRotation.x = angleLerp(simState.cameraRotation.x, simState.targetCameraRotation.x, cameraTransitionSpeed);
+            simState.cameraRotation.y = angleLerp(simState.cameraRotation.y, simState.targetCameraRotation.y, cameraTransitionSpeed);
+            const { x: rotX, y: rotY } = simState.cameraRotation; const camZDist = simState.cameraPosition.z;
+            const camX = camZDist * Math.sin(rotY) * Math.cos(rotX); const camY = camZDist * Math.sin(rotX); const camZ = camZDist * Math.cos(rotY) * Math.cos(rotX);
+            camera.position.set(camX, camY, camZ); camera.up.copy(worldUp); camera.lookAt(scene.position);
+
+            composer.render(delta);
+        }
+
+        // --- Control Configuration (v17.3) ---
+        const controlsConfig = {
+            // Flow Dynamics
+            flowIntensity:                 { stateVar: 'flowIntensity', type: 'range', valueId: 'flowIntensityValue', format: v => v.toFixed(2) },
+            flowTwist:                     { stateVar: 'flowTwist', type: 'range', valueId: 'flowTwistValue', format: v => v.toFixed(1) },
+            flowCouplingFactor:            { stateVar: 'flowCouplingFactor', type: 'range', valueId: 'flowCouplingFactorValue', format: v => v.toFixed(2) },
+            angularMomentumEffect:         { stateVar: 'angularMomentumEffect', type: 'range', valueId: 'angularMomentumEffectValue', format: v => v.toFixed(2) },
+            approximateAngularMomentum:    { stateVar: 'approximateAngularMomentum', type: 'checkbox', eventType: 'change' },
+            windingTheta:                  { stateVar: 'windingTheta', type: 'range', valueId: 'windingThetaValue', format: v => parseInt(v) },
+            windingPhi:                    { stateVar: 'windingPhi', type: 'range', valueId: 'windingPhiValue', format: v => parseInt(v) },
+            solitonPhasing:                { stateVar: 'solitonPhasing', type: 'range', valueId: 'solitonPhasingValue', format: v => v.toFixed(4) },
+            jitterScale:                   { stateVar: 'jitterScale', type: 'range', valueId: 'jitterScaleValue', format: v => v.toFixed(4) },
+            visualizeEigenmode:            { stateVar: 'visualizeEigenmode', type: 'checkbox', eventType: 'change', effect: () => { updateEigenmodeControlsVisibility(); if(simState.colorMode === 'eigenmodePhase') createParticleSystem(simState.userParticleCount); } },
+            eigenmodeM:                    { stateVar: 'eigenmodeM', type: 'number', eventType: 'input', effect: () => { if(simState.colorMode === 'eigenmodePhase' && simState.visualizeEigenmode) createParticleSystem(simState.userParticleCount); } },
+            eigenmodeN:                    { stateVar: 'eigenmodeN', type: 'number', eventType: 'input', effect: () => { if(simState.colorMode === 'eigenmodePhase' && simState.visualizeEigenmode) createParticleSystem(simState.userParticleCount); } },
+            eigenmodeFlowStrength:         { stateVar: 'eigenmodeFlowStrength', type: 'range', valueId: 'eigenmodeFlowStrengthValue', format: v => v.toFixed(2) },
+            // Geometry & Structure
+            arrangementMode:               { stateVar: 'arrangementMode', type: 'select', eventType: 'change', changeEffect: (v) => { createParticleSystem(simState.userParticleCount); } },
+            tubeRadius:                    { stateVar: 'tubeRadius', type: 'range', valueId: 'tubeRadiusValue', format: v => v.toFixed(2), eventType: 'input', changeEffect: () => createParticleSystem(simState.userParticleCount) },
+            torusRadius:                   { stateVar: 'torusRadius', type: 'range', valueId: 'torusRadiusValue', format: v => v.toFixed(2), eventType: 'input', changeEffect: () => createParticleSystem(simState.userParticleCount) },
+            pulseAmplitude:                { stateVar: 'pulseAmplitude', type: 'range', valueId: 'pulseAmplitudeValue', format: v => v.toFixed(2) },
+            pulseFrequency:                { stateVar: 'pulseFrequency', type: 'range', valueId: 'pulseFrequencyValue', format: v => v.toFixed(2) },
+            numInnerTori:                  { stateVar: 'numInnerTori', type: 'range', valueId: 'numInnerToriValue', format: v => parseInt(v), eventType: 'input', changeEffect: () => createParticleSystem(simState.userParticleCount) },
+            innerTorusRatio:               { stateVar: 'innerTorusRatio', type: 'range', valueId: 'innerTorusRatioValue', format: v => v.toFixed(2), eventType: 'input', changeEffect: () => createParticleSystem(simState.userParticleCount) },
+            useDiscretePlacement:          { stateVar: 'useDiscretePlacement', type: 'checkbox', eventType: 'change', changeEffect: (isChecked) => { updateDiscretePlacementControlsVisibility(); toggleParticleCountSlider(!isChecked); syncParticleCountToGrid(true); }},
+            discreteN:                     { stateVar: 'discreteN', type: 'range', valueId: 'discreteNValue', format: v => parseInt(v), effect: updateDiscretePointsDisplay, eventType: 'input', changeEffect: () => { if(simState.useDiscretePlacement) syncParticleCountToGrid(true); } },
+            discreteM:                     { stateVar: 'discreteM', type: 'range', valueId: 'discreteMValue', format: v => parseInt(v), effect: updateDiscretePointsDisplay, eventType: 'input', changeEffect: () => { if(simState.useDiscretePlacement) syncParticleCountToGrid(true); } },
+            // Particles & Appearance
+            particleCount:                 { stateVar: 'userParticleCount', type: 'range', valueId: 'particleCountValue', format: v => v>=1000?(v/1000).toFixed(0)+'k':v.toString(), eventType: 'input', changeEffect: (v) => { if (!simState.useDiscretePlacement) createParticleSystem(v); } },
+            particleSize:                  { stateVar: 'particleSize', type: 'range', valueId: 'particleSizeValue', format: v => v.toFixed(3), effect: (v) => { if(particlesMaterial) particlesMaterial.size = v; } },
+            energyIntensity:               { stateVar: 'energyIntensity', type: 'range', valueId: 'energyIntensityValue', format: v => v.toFixed(2), effect: updateParticleGlow },
+            particleOpacity:               { stateVar: 'particleOpacity', type: 'range', valueId: 'particleOpacityValue', format: v => v.toFixed(2), effect: updateParticleGlow },
+            particleOpacityVariation:      { stateVar: 'particleOpacityVariation', type: 'range', valueId: 'particleOpacityVariationValue', format: v => v.toFixed(2), effect: updateParticleGlow }, // Added
+            colorMode:                     { stateVar: 'colorMode', type: 'select', eventType: 'change', changeEffect: () => { updateManualColorControlsVisibility(); createParticleSystem(simState.userParticleCount); } },
+            particleColorR:                { stateVar: 'particleColorR', type: 'range', valueId: 'particleColorRValue', format: v => v.toFixed(2), changeEffect: () => { if(simState.colorMode === 'manual') createParticleSystem(simState.userParticleCount); } },
+            particleColorG:                { stateVar: 'particleColorG', type: 'range', valueId: 'particleColorGValue', format: v => v.toFixed(2), changeEffect: () => { if(simState.colorMode === 'manual') createParticleSystem(simState.userParticleCount); } },
+            particleColorB:                { stateVar: 'particleColorB', type: 'range', valueId: 'particleColorBValue', format: v => v.toFixed(2), changeEffect: () => { if(simState.colorMode === 'manual') createParticleSystem(simState.userParticleCount); } },
+            particleColorVariation:        { stateVar: 'particleColorVariation', type: 'range', valueId: 'particleColorVariationValue', format: v => v.toFixed(2), changeEffect: () => { if(simState.colorMode === 'manual') createParticleSystem(simState.userParticleCount); } },
+            // Post-Processing
+            enableTrails:                  { stateVar: 'enableTrails', type: 'checkbox', eventType: 'change', effect: updateComposerPasses }, // Effect needed
+            trailDecay:                    { stateVar: 'trailDecay', type: 'range', valueId: 'trailDecayValue', format: v => v.toFixed(3), effect: (v) => { if(afterimagePass) afterimagePass.uniforms["damp"].value = v; } },
+            enableBloom:                   { stateVar: 'enableBloom', type: 'checkbox', eventType: 'change', effect: updateComposerPasses }, // Effect needed
+            // Animation
+            simSpeed:                      { stateVar: 'simSpeed', type: 'range', valueId: 'simSpeedValue', format: v => v.toFixed(1)+'x' },
+        };
+
+        // --- Helper to set state value ---
+        function setStateValue(stateVar, value, type) {
+            if (type === 'range' || type === 'number') { const num = parseFloat(value); simState[stateVar] = isNaN(num) ? simState[stateVar] : num; }
+            else if (type === 'checkbox') { simState[stateVar] = !!value; }
+            else { simState[stateVar] = value; }
+            if (['windingTheta', 'windingPhi', 'discreteN', 'discreteM', 'eigenmodeM', 'eigenmodeN', 'userParticleCount', 'numInnerTori'].includes(stateVar)) { if(stateVar !== 'userParticleCount') simState[stateVar] = parseInt(simState[stateVar]) || 0; }
+            if (stateVar === 'discreteN' || stateVar === 'discreteM') { simState[stateVar] = Math.max(4, parseInt(simState[stateVar]) || 4); }
+           }
+
+        // --- Helper to update control value ---
+        function updateControlValue(id, value, config) {
+            const element = document.getElementById(id); if (!element) return;
+            if (config.type === 'checkbox') { element.checked = value; }
+            else {
+                // Ensure correct value type before setting (e.g., prevent setting "5.00" on a step="0.05" slider expecting "5.0")
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                    element.value = numValue;
+                } else if (config.type === 'select' || config.type === 'text') { // Allow strings for select/text
+                     element.value = value;
+                }
+                 // Update display span formatting
+                if (config.valueId) {
+                    const valueSpan = document.getElementById(config.valueId);
+                    if (valueSpan) {
+                         valueSpan.textContent = config.format ? config.format(numValue) : numValue;
+                    }
+                 }
+            }
+             // Special case for checkbox with valueId (though not common)
+             if (config.type === 'checkbox' && config.valueId) {
+                 const valueSpan = document.getElementById(config.valueId);
+                 if (valueSpan) { valueSpan.textContent = config.format ? config.format(value) : value; }
+             }
+           }
+
+        // --- initializeUI ---
+        function initializeUI() {
+            console.log("Initializing UI from simState (v17.3)...");
+            for (const id in controlsConfig) {
+                const config = controlsConfig[id];
+                if (simState.hasOwnProperty(config.stateVar)) {
+                    updateControlValue(id, simState[config.stateVar], config);
+                } else {
+                    console.warn(`State variable '${config.stateVar}' not found in simState during UI initialization for control '${id}'.`);
+                }
+             }
+            updateDiscretePlacementControlsVisibility(); updateEigenmodeControlsVisibility(); updateManualColorControlsVisibility();
+            updateDiscretePointsDisplay(); updateParticleGlow(); updateComposerPasses(); updateDiscreteLinkIcon();
+            document.getElementById('playPauseButton').textContent = simState.isPaused ? 'Play' : 'Pause';
+            toggleUI(simState.uiVisible); toggleParticleCountSlider(!simState.useDiscretePlacement);
+            document.querySelectorAll('.control-section').forEach((details, index) => { details.open = (index === 0); });
+        }
+
+        // --- DOM Ready ---
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // --- Named Config Slot Functions ---
+            const configNameInput = document.getElementById('configNameInput');
+            const configSelect = document.getElementById('configSelect');
+
+            function getConfigSlotKey(name) { const sanitizedName = name.replace(/[^\w\s-]/g, '').trim(); return sanitizedName ? namedSlotPrefix + sanitizedName : null; }
+
+            function populateConfigDropdown() {
+                configSelect.innerHTML = '<option value="">-- Select Saved Config --</option>';
+                let savedConfigs = [];
+                for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith(namedSlotPrefix)) { savedConfigs.push(key.substring(namedSlotPrefix.length)); } }
+                savedConfigs.sort((a, b) => a.localeCompare(b));
+                savedConfigs.forEach(name => { const option = document.createElement('option'); option.value = name; option.textContent = name; configSelect.appendChild(option); });
+            }
+
+            function saveNamedConfig() {
+                const name = configNameInput.value.trim(); if (!name) { alert("Please enter a name."); configNameInput.focus(); return; }
+                const key = getConfigSlotKey(name); if (!key) { alert("Invalid name."); return; }
+                try {
+                    const stateToSave = {};
+                    for (const id in controlsConfig) { const config = controlsConfig[id]; if (simState.hasOwnProperty(config.stateVar)) { stateToSave[config.stateVar] = simState[config.stateVar]; } }
+                    stateToSave.cameraPosition = { ...simState.cameraPosition }; stateToSave.cameraRotation = { ...simState.cameraRotation }; stateToSave.discreteSlidersLinked = simState.discreteSlidersLinked;
+                    localStorage.setItem(key, JSON.stringify(stateToSave));
+                    console.log(`Config saved: ${name}`); alert(`'${name}' saved!`);
+                    populateConfigDropdown(); configSelect.value = name; configNameInput.value = '';
+                } catch (error) { console.error(`Save failed '${name}':`, error); alert(`Error saving '${name}'.`); }
+            }
+
+            function loadNamedConfig() {
+                const name = configSelect.value; if (!name) { alert("Select config."); return; }
+                const key = getConfigSlotKey(name); if (!key) return;
+                  const loadedOk = loadStateFromStorage(key, `config '${name}'`);
+                  if(loadedOk) { initializeUI(); syncParticleCountToGrid(false); createParticleSystem(simState.userParticleCount); alert(`'${name}' loaded.`); }
+            }
+
+            function deleteNamedConfig() {
+                const name = configSelect.value; if (!name) { alert("Select config."); return; }
+                const key = getConfigSlotKey(name); if (!key) return;
+                if (confirm(`Delete config '${name}'?`)) {
+                    try { localStorage.removeItem(key); console.log(`Deleted: ${name}`); alert(`'${name}' deleted.`); populateConfigDropdown(); }
+                    catch (error) { console.error(`Delete failed '${name}':`, error); alert(`Error deleting '${name}'.`); }
+                }
+            }
+
+            // --- Auto Save/Load State ---
+            function autoSaveState() {
+                try {
+                    const stateToSave = {};
+                    for (const id in controlsConfig) { const config = controlsConfig[id]; if (simState.hasOwnProperty(config.stateVar)) { stateToSave[config.stateVar] = simState[config.stateVar]; } }
+                    stateToSave.cameraPosition = { ...simState.cameraPosition }; stateToSave.cameraRotation = { ...simState.cameraRotation }; stateToSave.discreteSlidersLinked = simState.discreteSlidersLinked;
+                    localStorage.setItem(autoSaveKey, JSON.stringify(stateToSave));
+                } catch (error) { console.error("Auto-save failed:", error); }
+               }
+               const debouncedAutoSave = debounce(autoSaveState, 750);
+
+            function loadStateFromStorage(storageKey, sourceDescription = "saved state") {
+                  const savedState = localStorage.getItem(storageKey);
+                  if (savedState) {
+                      try {
+                          const state = JSON.parse(savedState); console.log(`Loading ${sourceDescription}...`);
+                           // Create a deep copy of the current default state to merge into
+                          const defaultStateCopy = JSON.parse(JSON.stringify(
+                                // Re-define the default state structure here to ensure we're merging into the correct base
+                                {
+                                    flowIntensity: 0.5, flowTwist: 2.0, flowCouplingFactor: 0.0, angularMomentumEffect: 5.0, approximateAngularMomentum: true,
+                                    windingTheta: 0, windingPhi: 0, solitonPhasing: 0.0, jitterScale: 0.0, visualizeEigenmode: false, eigenmodeM: 1,
+                                    eigenmodeN: 2, eigenmodeFlowStrength: 0.0, arrangementMode: 'single', tubeRadius: 2940, torusRadius: 3000,
+                                    pulseAmplitude: 0.0, pulseFrequency: 0.5, numInnerTori: 0, innerTorusRatio: 0.5, useDiscretePlacement: true,
+                                    discreteN: 300, discreteM: 300, discreteSlidersLinked: true, userParticleCount: 90000, particleCount: 90000,
+                                    particleSize: 1.0, energyIntensity: 50.0, particleOpacity: 0.8, particleOpacityVariation: 0.0, colorMode: 'manual',
+                                    particleColorR: 0.39, particleColorG: 0.62, particleColorB: 1.00, particleColorVariation: 1.0, enableTrails: true,
+                                    trailDecay: 0.938, enableBloom: true, isPaused: false, simSpeed: 1.0, uiVisible: true,
+                                    cameraPosition: { ...initialCameraPosition }, cameraRotation: { ...initialCameraRotation }, targetCameraRotation: { ...initialCameraRotation }
+                                }
+                          ));
+                          const mergedState = { ...defaultStateCopy };
+
+                          for (const key in defaultStateCopy) {
+                              if (state.hasOwnProperty(key)) {
+                                  if (key === 'cameraPosition' || key === 'cameraRotation') {
+                                      // Merge camera objects carefully
+                                      if(typeof state[key] === 'object' && state[key] !== null){
+                                           mergedState[key] = { ...mergedState[key], ...state[key] };
+                                       }
+                                   } else if (typeof defaultStateCopy[key] === 'boolean') {
+                                      mergedState[key] = !!state[key];
+                                  } else if (typeof defaultStateCopy[key] === 'number') {
+                                      const parsedNum = parseFloat(state[key]);
+                                      if (!isNaN(parsedNum)) {
+                                          mergedState[key] = parsedNum;
+                                      }
+                                  } else { // Assume string or other simple types
+                                      mergedState[key] = state[key];
+                                  }
+                              }
+                          }
+                          // Ensure specific loaded flags are boolean if they exist
+                          if (state.hasOwnProperty('discreteSlidersLinked')) { mergedState.discreteSlidersLinked = !!state.discreteSlidersLinked; }
+                          if (state.hasOwnProperty('approximateAngularMomentum')) { mergedState.approximateAngularMomentum = !!state.approximateAngularMomentum; }
+                          // ... (add others if needed)
+
+                          simState = mergedState;
+                          // Ensure target rotation matches loaded rotation
+                          simState.targetCameraRotation = { ...simState.cameraRotation };
+
+                          console.log(`${sourceDescription} loaded.`); return true;
+                      } catch (error) {
+                          console.error(`Load failed ${sourceDescription}:`, error);
+                          // Avoid clearing if it was just a load attempt from a slot, only clear auto-save
+                          if (storageKey === autoSaveKey) {
+                                localStorage.removeItem(storageKey);
+                                alert(`Error loading ${sourceDescription}. Cleared auto-save.`);
+                          } else {
+                                alert(`Error loading ${sourceDescription}. Please check console.`);
+                          }
+                           return false;
+                       }
+                  } else { console.log(`No ${sourceDescription} found.`); return false; }
+               }
+
+            // --- Restart Simulation Function ---
+            function restartSimulation() { console.log("Restarting simulation..."); simState.cameraPosition = { ...initialCameraPosition }; simState.cameraRotation = { ...initialCameraRotation }; simState.targetCameraRotation = { ...initialCameraRotation }; camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z); camera.rotation.set(0,0,0); camera.lookAt(scene.position); createParticleSystem(simState.userParticleCount); console.log("Simulation restarted."); }
+
+            // --- Initial Load & Setup ---
+            loadStateFromStorage(autoSaveKey, "auto-saved state"); // Load auto-save first
+            populateConfigDropdown(); // Populate dropdown with named slots
+            initializeUI(); // Initialize UI controls based on potentially loaded state
+            syncParticleCountToGrid(false); // Sync particle count if discrete mode is active
+            createParticleSystem(simState.userParticleCount); // Create initial particle system
+
+            // --- Global Event Listeners ---
+            window.addEventListener('resize', () => { const w=window.innerWidth,h=window.innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);composer.setSize(w,h); bloomPass.setSize(w, h); });
+            document.addEventListener('mousedown', (e)=>{if(!e.target.closest('#controls')){isDragging=true;previousMousePosition={x:e.clientX,y:e.clientY};}});
+            document.addEventListener('mouseup',()=>{isDragging=false;});
+            document.addEventListener('mousemove', (e)=>{if(isDragging){const dM={x:e.clientX-previousMousePosition.x,y:e.clientY-previousMousePosition.y}; simState.targetCameraRotation.y+=dM.x*0.005; simState.targetCameraRotation.x+=dM.y*0.005; simState.targetCameraRotation.x = Math.max(-Math.PI / 2 + epsilon, Math.min(Math.PI / 2 - epsilon, simState.targetCameraRotation.x)); previousMousePosition={x:e.clientX,y:e.clientY}; debouncedAutoSave();}}); // Added auto-save on drag
+            document.addEventListener('wheel',(e)=>{ if (!e.target.closest('#controls')) { const zS = 0.1 * (simState.cameraPosition.z / 1000); const d = -Math.sign(e.deltaY) * zS; simState.cameraPosition.z = Math.max(1000, Math.min(100000, simState.cameraPosition.z - d * 500)); e.preventDefault(); debouncedAutoSave(); }}, {passive:false}); // Added auto-save on zoom
+
+            // --- Control Panel Event Delegation ---
+            const controlsDiv = document.getElementById('controls');
+            controlsDiv.addEventListener('input', (e) => {
+                const id = e.target.id;
+                const config = controlsConfig[id];
+                // Handle 'input' events (typically for ranges, numbers, or unspecified types)
+                if (config && (config.eventType === 'input' || !config.eventType)) {
+                    const value = (config.type === 'checkbox') ? e.target.checked : e.target.value;
+                    setStateValue(config.stateVar, value, config.type);
+
+                    // Handle linked discrete sliders
+                    if (simState.discreteSlidersLinked && (id === 'discreteN' || id === 'discreteM')) {
+                        const linkedId = (id === 'discreteN') ? 'discreteM' : 'discreteN';
+                        const linkedConfig = controlsConfig[linkedId];
+                        const linkedSlider = document.getElementById(linkedId);
+                        if (linkedSlider) { // Check if slider exists before accessing properties
+                            const linkedMin = parseFloat(linkedSlider.min);
+                            const linkedMax = parseFloat(linkedSlider.max);
+                            const targetValue = Math.max(linkedMin, Math.min(linkedMax, parseFloat(simState[config.stateVar]) || 0));
+                            setStateValue(linkedConfig.stateVar, targetValue, linkedConfig.type);
+                            updateControlValue(linkedId, targetValue, linkedConfig);
+                         }
+                    }
+
+                    updateControlValue(id, simState[config.stateVar], config);
+                    if (config.effect) config.effect(simState[config.stateVar]); // Apply immediate effect if defined
+                     // Use debounce for potentially expensive change effects triggered by 'input'
+                     if (config.changeEffect) {
+                          debounce(() => config.changeEffect(simState[config.stateVar]), 300)(); // Debounce heavy effects
+                     } else {
+                         debouncedAutoSave(); // Auto-save immediately if no heavy change effect
+                     }
+                }
+            });
+
+            controlsDiv.addEventListener('change', (e) => {
+                const id = e.target.id;
+                const config = controlsConfig[id];
+                 // Handle 'change' events (typically for checkboxes, selects)
+                if (config && config.eventType === 'change') {
+                    const value = (config.type === 'checkbox') ? e.target.checked : e.target.value;
+                    setStateValue(config.stateVar, value, config.type);
+                    updateControlValue(id, simState[config.stateVar], config); // Update the UI element itself
+
+                    // --- FIX: Execute effect function for 'change' events too ---
+                    if (config.effect) {
+                        config.effect(simState[config.stateVar]);
+                    }
+                    // --- End Fix ---
+
+                    if (config.changeEffect) {
+                        config.changeEffect(simState[config.stateVar]); // Apply change effect if defined (usually less frequent than input)
+                    }
+                     debouncedAutoSave(); // Auto-save on change
+                }
+            });
+
+            // --- Button Event Listeners ---
+            document.getElementById('toggleUIButton').addEventListener('click', ()=>{toggleUI(!simState.uiVisible); debouncedAutoSave(); });
+            const showUIButton = document.getElementById('showUIButton');
+            showUIButton?.addEventListener('click', ()=>{toggleUI(true); debouncedAutoSave(); });
+            showUIButton?.addEventListener('mouseenter', () => { clearTimeout(fadeTimeoutId); showUIButton.classList.remove('faded-out'); });
+            showUIButton?.addEventListener('mouseleave', () => { if (!simState.uiVisible) { clearTimeout(fadeTimeoutId); fadeTimeoutId = setTimeout(() => { showUIButton.classList.add('faded-out'); }, 3000); } });
+            document.getElementById('playPauseButton').addEventListener('click', () => { simState.isPaused = !simState.isPaused; document.getElementById('playPauseButton').textContent = simState.isPaused ? 'Play' : 'Pause'; debouncedAutoSave(); });
+            document.getElementById('restartSimButton').addEventListener('click', restartSimulation);
+            document.getElementById('resetPresetButton').addEventListener('click', () => {
+                if (confirm("Reset all settings to default AND clear auto-save and ALL named configurations?")) {
+                    localStorage.removeItem(autoSaveKey);
+                    for (let i = localStorage.length - 1; i >= 0; i--) { const key = localStorage.key(i); if (key.startsWith(namedSlotPrefix)) { localStorage.removeItem(key); } }
+                    window.location.reload(); // Reload to get hardcoded defaults
+                }
+            });
+            document.getElementById('saveConfigButton').addEventListener('click', saveNamedConfig);
+            document.getElementById('loadConfigButton').addEventListener('click', loadNamedConfig);
+            document.getElementById('deleteConfigButton').addEventListener('click', deleteNamedConfig);
+
+            // --- Discrete Slider Link Icon Listener ---
+            document.getElementById('discreteLinkIcon').addEventListener('click', () => { simState.discreteSlidersLinked = !simState.discreteSlidersLinked; updateDiscreteLinkIcon(); if (simState.discreteSlidersLinked) { const nValue = simState.discreteN; const mSlider = document.getElementById('discreteM'); if (mSlider) { const mMin = parseFloat(mSlider.min); const mMax = parseFloat(mSlider.max); const targetValue = Math.max(mMin, Math.min(mMax, nValue)); if (targetValue !== simState.discreteM) { setStateValue('discreteM', targetValue, controlsConfig.discreteM.type); updateControlValue('discreteM', targetValue, controlsConfig.discreteM); if (simState.useDiscretePlacement) { syncParticleCountToGrid(true); } } } } debouncedAutoSave(); });
+
+            // --- View Buttons ---
+            const isoAngleX = Math.atan(1/Math.sqrt(2)); const isoAngleY = Math.PI / 4;
+            const viewButtons = { 'snapTopViewButton': { x: Math.PI / 2 - epsilon, y: 0 }, 'snapBottomViewButton': { x: -Math.PI / 2 + epsilon, y: 0 }, 'snapFrontViewButton': { x: 0, y: 0 }, 'snapBackViewButton': { x: 0, y: Math.PI }, 'snapLeftViewButton': { x: 0, y: -Math.PI / 2 }, 'snapRightViewButton': { x: 0, y: Math.PI / 2 }, 'snapIsoNEButton': { x: isoAngleX, y: -isoAngleY }, 'snapIsoNWButton': { x: isoAngleX, y: isoAngleY }, 'snapIsoSEButton': { x: isoAngleX, y: -isoAngleY + Math.PI }, 'snapIsoSWButton': { x: isoAngleX, y: isoAngleY + Math.PI }, };
+            for (const btnId in viewButtons) { document.getElementById(btnId)?.addEventListener('click', () => { simState.targetCameraRotation = { ...viewButtons[btnId] }; debouncedAutoSave(); }); } // Added auto-save on view change
+
+            // --- Hotkeys Setup ---
+            const hotkeysPanel = document.getElementById('hotkeysPanel');
+            document.getElementById('showHotkeysButton')?.addEventListener('click', () => { hotkeysPanel.style.display = 'block'; });
+            document.getElementById('closeHotkeysButton')?.addEventListener('click', () => { hotkeysPanel.style.display = 'none'; });
+            hotkeysPanel?.addEventListener('keydown', (e) => { if (e.key === 'Escape') { hotkeysPanel.style.display = 'none'; } });
+
+            document.addEventListener('keydown', (e) => {
+                const targetTagName = e.target.tagName;
+                const isInputFocused = targetTagName === 'INPUT' || targetTagName === 'SELECT' || targetTagName === 'TEXTAREA';
+                const isHotkeysPanelOpen = hotkeysPanel.style.display === 'block';
+
+                if (isHotkeysPanelOpen && e.key !== 'Escape') return;
+                if (!isHotkeysPanelOpen && isInputFocused) return;
+
+                let handled = true;
+                let buttonToClick = null;
+                switch (e.key) {
+                    case ' ': buttonToClick = 'playPauseButton'; break;
+                    case 'h': case 'H': buttonToClick = 'toggleUIButton'; break;
+                    case 'R': if (e.shiftKey) { buttonToClick = 'restartSimButton'; } else { handled = false; } break;
+                    case 'Delete': if (e.shiftKey) { buttonToClick = 'resetPresetButton'; } else { handled = false; } break;
+                    case 't': case 'T': buttonToClick = 'snapTopViewButton'; break;
+                    case 'f': case 'F': buttonToClick = 'snapFrontViewButton'; break;
+                    case 'l': case 'L': buttonToClick = 'snapLeftViewButton'; break;
+                    case 'i': case 'I': buttonToClick = 'snapIsoNEButton'; break;
+                    case 'Escape': if (isHotkeysPanelOpen) { hotkeysPanel.style.display = 'none'; } else { handled = false; } break;
+                    default: handled = false; break;
+                }
+                if (buttonToClick) {
+                    document.getElementById(buttonToClick)?.click();
+                }
+                if (handled) { e.preventDefault(); }
+            });
+
+            // Prevent dragging on sliders
+            controlsDiv.querySelectorAll('input[type="range"]').forEach(s=>{s.addEventListener('mousedown',(e)=>e.stopPropagation());s.addEventListener('touchstart',(e)=>e.stopPropagation(),{passive:true});});
+
+        }); // End DOMContentLoaded wrapper
+
+        // --- Start Animation ---
+        animate();
+
+    </script>
+</body>
+</html>
