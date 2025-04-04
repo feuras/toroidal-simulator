@@ -1,6 +1,6 @@
 # Toroidal Simulator - Unified Physics (v17.3)
 
-**[>> Try the Live Demo Here! <<]([https://your-github-username.github.io/your-repo-name/)](https://toroidal.midland.org.uk/)**
+Live Demo Here - https://toroidal.midland.org.uk/
 
 ---
 
